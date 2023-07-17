@@ -17,6 +17,7 @@ import { Checkbox, Col, DatePicker, Pagination, Radio, Row, Space } from "antd";
 import styled from "styled-components";
 import { TicketData } from "../features/ticketSlice";
 import { setCurrentPage } from "../features/ticketPackSlice";
+import { useCallback } from "react";
 
 const StyledTicket = styled.div`
   background-color: #f9f6f4;
@@ -149,12 +150,53 @@ const Ticket: React.FC = () => {
     dispatch(setCurrentPage(page));
   };
 
+  // Hàm lọc danh sách vé
+  const filterTickets = useCallback(
+    (tickets: TicketData[], filterValue: string[], defaultValue: string) => {
+      return tickets.filter((ticket) => {
+        // Lọc theo tình trạng sử dụng
+        if (filterValue.includes("tatca")) {
+          // Chọn "Tất cả"
+          return true;
+        } else if (filterValue.includes("dasd")) {
+          // Chọn "Đã sử dụng"
+          return ticket.usageStatus === "Đã sử dụng";
+        } else if (filterValue.includes("chuasd")) {
+          // Chọn "Chưa sử dụng"
+          return ticket.usageStatus === "Chưa sử dụng";
+        } else if (filterValue.includes("hethan")) {
+          // Chọn "Hết hạn"
+          return ticket.usageStatus === "Hết hạn";
+        }
+
+        // Lọc theo cổng check-in
+        if (filterValue.includes("tatcacong")) {
+          // Chọn "Tất cả"
+          return true;
+        } else if (filterValue.includes(ticket.checkInGate)) {
+          // Chọn cổng check-in cụ thể
+          return true;
+        }
+
+        return false;
+      });
+    },
+    []
+  );
+
+  // Hàm xử lý sự kiện khi người dùng nhấp vào nút "Lọc"
+  const handleFilterClick = useCallback(() => {
+    const filteredTickets = filterTickets(tickets, filterValue, defaultValue); // Gọi hàm filterTickets để lọc danh sách vé
+    setFilteredTickets(filteredTickets); // Cập nhật danh sách vé đã lọc vào state
+    dispatch(setShowOverlay(false));
+  }, [tickets, filterValue, defaultValue, filterTickets]);
+
+  useEffect(() => {
+    setFilteredTickets(tickets); // Khởi tạo danh sách vé đã lọc bằng danh sách vé ban đầu
+  }, [tickets]);
+
   const handleFilterButtonClick = () => {
     dispatch(setShowOverlay(true));
-  };
-
-  const handleCancelOverlay = () => {
-    dispatch(setShowOverlay(false));
   };
 
   return (
@@ -409,7 +451,7 @@ const Ticket: React.FC = () => {
             </div>
             <div className="filter pt-4">
               <div className="filter-ticket">
-                <button>Lọc</button>
+                <button onClick={handleFilterClick}>Lọc</button>
               </div>
             </div>
           </div>
