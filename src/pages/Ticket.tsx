@@ -41,6 +41,9 @@ const Ticket: React.FC = () => {
   );
 
   const [filteredTickets, setFilteredTickets] = useState([] as TicketData[]);
+  const [selectedGates, setSelectedGates] = useState<string[]>([]);
+
+  const [isFiltered, setIsFiltered] = useState(false);
 
   const rowsPerPage = 6;
 
@@ -139,6 +142,7 @@ const Ticket: React.FC = () => {
   };
 
   const handleCheckboxChange = (checkedValues: CheckboxValueType[]) => {
+    console.log("Đã chọn các giá trị:", checkedValues);
     dispatch(setFilterValue(checkedValues as string[]));
   };
 
@@ -169,31 +173,35 @@ const Ticket: React.FC = () => {
         }
 
         // Lọc theo cổng check-in
-        if (filterValue.includes("tatcacong")) {
-          // Chọn "Tất cả"
+        if (selectedGates.length === 0) {
+          // Nếu không có cổng nào được chọn thì hiển thị tất cả
           return true;
-        } else if (filterValue.includes(ticket.checkInGate)) {
-          // Chọn cổng check-in cụ thể
+        } else if (selectedGates.includes("tatcacong")) {
+          // Nếu đã chọn "Tất cả" thì hiển thị tất cả
+          return true;
+        } else if (selectedGates.includes(ticket.checkInGate)) {
+          // Nếu cổng check-in của vé được chọn thì hiển thị vé đó
           return true;
         }
 
         return false;
       });
     },
-    []
+    [selectedGates]
   );
 
   // Hàm xử lý sự kiện khi người dùng nhấp vào nút "Lọc"
-  const handleFilterClick = useCallback(() => {
-    const filteredTickets = filterTickets(tickets, filterValue, defaultValue); // Gọi hàm filterTickets để lọc danh sách vé
-    setFilteredTickets(filteredTickets); // Cập nhật danh sách vé đã lọc vào state
-    dispatch(setShowOverlay(false));
-  }, [tickets, filterValue, defaultValue, filterTickets]);
-
-  useEffect(() => {
+  const handleFilterClick = () => {
     const filteredTickets = filterTickets(tickets, filterValue, defaultValue);
     setFilteredTickets(filteredTickets);
-  }, [tickets, filterValue, defaultValue, filterTickets]);
+    setIsFiltered(true);
+    dispatch(setShowOverlay(false));
+  };
+
+  // useEffect(() => {
+  //   const filteredTickets = filterTickets(tickets, filterValue, defaultValue);
+  //   setFilteredTickets(filteredTickets);
+  // }, [tickets, filterValue, defaultValue, filterTickets]);
 
   const handleFilterButtonClick = () => {
     dispatch(setShowOverlay(true));
@@ -270,65 +278,127 @@ const Ticket: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredTickets
-                    .filter((ticket) =>
-                      displayMode === "GD"
-                        ? ticket.ticketType === "GD"
-                        : ticket.ticketType === "SK"
-                    )
-                    .slice(
-                      (currentPage - 1) * rowsPerPage,
-                      currentPage * rowsPerPage
-                    )
-                    .map((ticket, index) => (
-                      <tr key={index}>
-                        <td>{calculateIndex(index)}</td>
-                        <td>{ticket.bookingCode}</td>
-                        <td>{ticket.ticketNumber}</td>
-                        {displayMode === "SK" && <td>{ticket.nameEvent}</td>}
-
-                        <td>
-                          <span
-                            className={
-                              ticket.usageStatus === "Đã sử dụng"
-                                ? "used"
-                                : ticket.usageStatus === "Chưa sử dụng"
-                                ? "not-used"
-                                : ticket.usageStatus === "Hết hạn"
-                                ? "expired"
-                                : ""
-                            }
-                          >
-                            <Icon
-                              icon="ion:ellipse"
-                              style={{ marginRight: "8px" }}
-                            />
-                            {ticket.usageStatus}
-                          </span>
-                        </td>
-                        <td>{ticket.usageDate}</td>
-                        <td>{ticket.ticketDate}</td>
-                        <td>
-                          {ticket.checkInGate ? (
-                            ticket.checkInGate
-                          ) : (
-                            <span>-</span>
-                          )}
-                        </td>
-                        <td>
-                          {ticket.usageStatus === "Chưa sử dụng" &&
-                          !ticket.checkInGate ? (
-                            <Icon icon="nimbus:ellipsis" />
-                          ) : ticket.usageStatus === "Đã sử dụng" ||
-                            ticket.usageStatus === "Hết hạn" ? (
-                            ""
-                          ) : (
-                            ticket.checkInGate
-                          )}
-                        </td>
-                      </tr>
-                    ))}
+                  {!isFiltered
+                    ? tickets
+                        .filter((ticket) =>
+                          displayMode === "GD"
+                            ? ticket.ticketType === "GD"
+                            : ticket.ticketType === "SK"
+                        )
+                        .slice(
+                          (currentPage - 1) * rowsPerPage,
+                          currentPage * rowsPerPage
+                        )
+                        .map((ticket, index) => (
+                          <tr key={index}>
+                            <td>{calculateIndex(index)}</td>
+                            <td>{ticket.bookingCode}</td>
+                            <td>{ticket.ticketNumber}</td>
+                            {displayMode === "SK" && (
+                              <td>{ticket.nameEvent}</td>
+                            )}
+                            <td>
+                              <span
+                                className={
+                                  ticket.usageStatus === "Đã sử dụng"
+                                    ? "used"
+                                    : ticket.usageStatus === "Chưa sử dụng"
+                                    ? "not-used"
+                                    : ticket.usageStatus === "Hết hạn"
+                                    ? "expired"
+                                    : ""
+                                }
+                              >
+                                <Icon
+                                  icon="ion:ellipse"
+                                  style={{ marginRight: "8px" }}
+                                />
+                                {ticket.usageStatus}
+                              </span>
+                            </td>
+                            <td>{ticket.usageDate}</td>
+                            <td>{ticket.ticketDate}</td>
+                            <td>
+                              {ticket.checkInGate ? (
+                                ticket.checkInGate
+                              ) : (
+                                <span>-</span>
+                              )}
+                            </td>
+                            <td>
+                              {ticket.usageStatus === "Chưa sử dụng" &&
+                              !ticket.checkInGate ? (
+                                <Icon icon="nimbus:ellipsis" />
+                              ) : ticket.usageStatus === "Đã sử dụng" ||
+                                ticket.usageStatus === "Hết hạn" ? (
+                                ""
+                              ) : (
+                                ticket.checkInGate
+                              )}
+                            </td>
+                          </tr>
+                        ))
+                    : filteredTickets
+                        .filter((ticket) =>
+                          displayMode === "GD"
+                            ? ticket.ticketType === "GD"
+                            : ticket.ticketType === "SK"
+                        )
+                        .slice(
+                          (currentPage - 1) * rowsPerPage,
+                          currentPage * rowsPerPage
+                        )
+                        .map((ticket, index) => (
+                          <tr key={index}>
+                            <td>{calculateIndex(index)}</td>
+                            <td>{ticket.bookingCode}</td>
+                            <td>{ticket.ticketNumber}</td>
+                            {displayMode === "SK" && (
+                              <td>{ticket.nameEvent}</td>
+                            )}
+                            <td>
+                              <span
+                                className={
+                                  ticket.usageStatus === "Đã sử dụng"
+                                    ? "used"
+                                    : ticket.usageStatus === "Chưa sử dụng"
+                                    ? "not-used"
+                                    : ticket.usageStatus === "Hết hạn"
+                                    ? "expired"
+                                    : ""
+                                }
+                              >
+                                <Icon
+                                  icon="ion:ellipse"
+                                  style={{ marginRight: "8px" }}
+                                />
+                                {ticket.usageStatus}
+                              </span>
+                            </td>
+                            <td>{ticket.usageDate}</td>
+                            <td>{ticket.ticketDate}</td>
+                            <td>
+                              {ticket.checkInGate ? (
+                                ticket.checkInGate
+                              ) : (
+                                <span>-</span>
+                              )}
+                            </td>
+                            <td>
+                              {ticket.usageStatus === "Chưa sử dụng" &&
+                              !ticket.checkInGate ? (
+                                <Icon icon="nimbus:ellipsis" />
+                              ) : ticket.usageStatus === "Đã sử dụng" ||
+                                ticket.usageStatus === "Hết hạn" ? (
+                                ""
+                              ) : (
+                                ticket.checkInGate
+                              )}
+                            </td>
+                          </tr>
+                        ))}
                 </tbody>
+
                 <div className="pagination-container pagination-fixed">
                   <Pagination
                     current={currentPage}
