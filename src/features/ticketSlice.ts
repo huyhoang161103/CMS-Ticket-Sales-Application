@@ -48,6 +48,14 @@ const ticketSlice = createSlice({
   },
 });
 
+export const setFilterValues = (
+  filterValue: string[],
+  defaultValue: string
+) => ({
+  type: "ticket/setFilterValues",
+  payload: { filterValue, defaultValue },
+});
+
 export const { setFilterValue, setDefaultValue, setTickets, setShowOverlay } =
   ticketSlice.actions;
 

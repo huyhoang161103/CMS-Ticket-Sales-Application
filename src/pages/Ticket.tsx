@@ -150,21 +150,20 @@ const Ticket: React.FC = () => {
     dispatch(setCurrentPage(page));
   };
 
-  // Hàm lọc danh sách vé
   const filterTickets = useCallback(
     (tickets: TicketData[], filterValue: string[], defaultValue: string) => {
       return tickets.filter((ticket) => {
-        // Lọc theo tình trạng sử dụng
-        if (filterValue.includes("tatca")) {
+        // Lọc theo trạng thái sử dụng
+        if (defaultValue === "tatca") {
           // Chọn "Tất cả"
           return true;
-        } else if (filterValue.includes("dasd")) {
+        } else if (defaultValue === "dasd") {
           // Chọn "Đã sử dụng"
           return ticket.usageStatus === "Đã sử dụng";
-        } else if (filterValue.includes("chuasd")) {
+        } else if (defaultValue === "chuasd") {
           // Chọn "Chưa sử dụng"
           return ticket.usageStatus === "Chưa sử dụng";
-        } else if (filterValue.includes("hethan")) {
+        } else if (defaultValue === "hethan") {
           // Chọn "Hết hạn"
           return ticket.usageStatus === "Hết hạn";
         }
@@ -192,8 +191,9 @@ const Ticket: React.FC = () => {
   }, [tickets, filterValue, defaultValue, filterTickets]);
 
   useEffect(() => {
-    setFilteredTickets(tickets); // Khởi tạo danh sách vé đã lọc bằng danh sách vé ban đầu
-  }, [tickets]);
+    const filteredTickets = filterTickets(tickets, filterValue, defaultValue);
+    setFilteredTickets(filteredTickets);
+  }, [tickets, filterValue, defaultValue, filterTickets]);
 
   const handleFilterButtonClick = () => {
     dispatch(setShowOverlay(true));
@@ -270,13 +270,11 @@ const Ticket: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {tickets
+                  {filteredTickets
                     .filter((ticket) =>
                       displayMode === "GD"
-                        ? // Lọc vé gia đình
-                          ticket.ticketType === "GD"
-                        : // Lọc vé sự kiện
-                          ticket.ticketType === "SK"
+                        ? ticket.ticketType === "GD"
+                        : ticket.ticketType === "SK"
                     )
                     .slice(
                       (currentPage - 1) * rowsPerPage,
