@@ -175,7 +175,7 @@ const Ticketpack: React.FC = () => {
                 <thead>
                   <tr className="cot">
                     <th>STT</th>
-                    <th>Mã gói</th>
+                    <th className="no-wrap">Mã gói</th>
                     <th>Tên gói vé</th>
                     <th>Ngày áp dụng</th>
                     <th>Ngày hết hạn</th>

@@ -137,8 +137,9 @@ const Ticket: React.FC = () => {
 
   const handleCheckAllChange = (e: any) => {
     const checked = e.target.checked;
-    const values = checked ? ["tatcacong"] : [];
-    dispatch(setFilterValue(values));
+    const allGates = ["tatcacong", "cong1", "cong2", "cong3", "cong4", "cong5"];
+    setSelectedGates(checked ? allGates : []);
+    dispatch(setFilterValue(checked ? ["tatcacong"] : []));
   };
 
   const handleCheckboxChange = (checkedValues: CheckboxValueType[]) => {
@@ -159,27 +160,20 @@ const Ticket: React.FC = () => {
       return tickets.filter((ticket) => {
         // Lọc theo trạng thái sử dụng
         if (defaultValue === "tatca") {
-          // Chọn "Tất cả"
           return true;
         } else if (defaultValue === "dasd") {
-          // Chọn "Đã sử dụng"
           return ticket.usageStatus === "Đã sử dụng";
         } else if (defaultValue === "chuasd") {
-          // Chọn "Chưa sử dụng"
           return ticket.usageStatus === "Chưa sử dụng";
         } else if (defaultValue === "hethan") {
-          // Chọn "Hết hạn"
           return ticket.usageStatus === "Hết hạn";
         }
 
         // Lọc theo cổng check-in
-        if (selectedGates.length === 0) {
-          // Nếu không có cổng nào được chọn thì hiển thị tất cả
-          return true;
-        } else if (selectedGates.includes("tatcacong")) {
+        if (filterValue.includes("tatcacong")) {
           // Nếu đã chọn "Tất cả" thì hiển thị tất cả
           return true;
-        } else if (selectedGates.includes(ticket.checkInGate)) {
+        } else if (filterValue.includes(ticket.checkInGate)) {
           // Nếu cổng check-in của vé được chọn thì hiển thị vé đó
           return true;
         }
@@ -187,7 +181,7 @@ const Ticket: React.FC = () => {
         return false;
       });
     },
-    [selectedGates]
+    []
   );
 
   // Hàm xử lý sự kiện khi người dùng nhấp vào nút "Lọc"
@@ -197,11 +191,6 @@ const Ticket: React.FC = () => {
     setIsFiltered(true);
     dispatch(setShowOverlay(false));
   };
-
-  // useEffect(() => {
-  //   const filteredTickets = filterTickets(tickets, filterValue, defaultValue);
-  //   setFilteredTickets(filteredTickets);
-  // }, [tickets, filterValue, defaultValue, filterTickets]);
 
   const handleFilterButtonClick = () => {
     dispatch(setShowOverlay(true));

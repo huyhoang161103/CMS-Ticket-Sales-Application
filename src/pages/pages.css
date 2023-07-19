@@ -35,7 +35,7 @@
 
 .content {
   width: 98%;
-  margin-bottom: 40px;
+  margin-bottom: 30px;
   border-radius: 24px;
   background: #fff;
 }
@@ -337,7 +337,7 @@ th:nth-child(8) {
 }
 .pagination-fixed {
   position: fixed;
-  bottom: 55px;
+  bottom: 50px;
   left: 53%;
   z-index: 1;
 }
