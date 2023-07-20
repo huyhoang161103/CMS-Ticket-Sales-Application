@@ -80,18 +80,7 @@ const Navbar: React.FC = () => {
             >
               <Icon icon="uil:setting" /> Cài đặt
             </NavLink>
-            {/* {showSettingsSubMenu && (
-              <ul className="submenu">
-                <li>
-                  <NavLink
-                    to="/settings/service-package"
-                    className={getNavLinkClass("/settings/service-package")}
-                  >
-                    Gói dịch vụ
-                  </NavLink>
-                </li>
-              </ul>
-            )} */}
+
             {showServicePackage && (
               <div className="service-package">
                 <ul>

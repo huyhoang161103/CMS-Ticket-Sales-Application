@@ -1,28 +1,44 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-
 import {
-  setFilterValue,
-  setDefaultValue,
-  setTickets,
-  setShowOverlay,
-} from "../features/ticketSlice";
+  Button,
+  Checkbox,
+  Col,
+  DatePicker,
+  Radio,
+  Row,
+  Space,
+  Table,
+  Tag,
+  Tooltip,
+} from "antd";
+import { Icon } from "@iconify/react";
+import styled from "styled-components";
 import { RootState } from "../features/store";
 import { firestore } from "../firebase/config";
+import { TicketData } from "../features/ticketSlice";
+import {
+  setTickets,
+  setShowOverlay,
+  setFilterValue,
+  setDefaultValue,
+} from "../features/ticketSlice";
+import { setCurrentPage } from "../features/ticketPackSlice";
+import { useCallback } from "react";
 import { CheckboxValueType } from "antd/es/checkbox/Group";
 import Navbar from "../components/navbar";
 import SearchNotificationBar from "../components/search";
-import { Icon } from "@iconify/react";
-import { Checkbox, Col, DatePicker, Pagination, Radio, Row, Space } from "antd";
-import styled from "styled-components";
-import { TicketData } from "../features/ticketSlice";
-import { setCurrentPage } from "../features/ticketPackSlice";
-import { useCallback } from "react";
 
 const StyledTicket = styled.div`
   background-color: #f9f6f4;
 `;
-
+type TablePaginationPosition =
+  | "topLeft"
+  | "topCenter"
+  | "topRight"
+  | "bottomLeft"
+  | "bottomCenter"
+  | "bottomRight";
 const TransparentButton = styled.button`
   font-family: monospace;
   font-size: 18px;
@@ -35,22 +51,133 @@ const TransparentButton = styled.button`
   margin-right: 12px;
 `;
 
-const Ticket: React.FC = () => {
+const customColors = ["var(--yellow-05, #FFD2A8)"];
+
+const TableWithPagination: React.FC = () => {
+  const [displayMode, setDisplayMode] = useState<"GD" | "SK">("GD");
+
+  const columns = [
+    {
+      title: "STT",
+      dataIndex: "index",
+      key: "index",
+    },
+    {
+      title: "Booking Code",
+      dataIndex: "bookingCode",
+      className: "no-wrap",
+      key: "bookingCode",
+      render: (
+        text:
+          | string
+          | number
+          | boolean
+          | React.ReactElement<any, string | React.JSXElementConstructor<any>>
+          | Iterable<React.ReactNode>
+          | React.ReactPortal
+          | null
+          | undefined
+      ) => <a>{text}</a>,
+    },
+    {
+      title: "Số vé",
+      dataIndex: "ticketNumber",
+      key: "ticketNumber",
+    },
+    {
+      title: "Tên sự kiện",
+      dataIndex: "nameEvent",
+      key: "nameEvent",
+      className: "no-wrap",
+    },
+
+    {
+      title: "Tình trạng sử dụng",
+      dataIndex: "usageStatus",
+      key: "usageStatus",
+      className: "no-wrap",
+      render: (
+        status:
+          | string
+          | number
+          | boolean
+          | React.ReactElement<any, string | React.JSXElementConstructor<any>>
+          | Iterable<React.ReactNode>
+          | null
+          | undefined
+      ) => (
+        <span
+          className={
+            status === "Đã sử dụng"
+              ? "used"
+              : status === "Chưa sử dụng"
+              ? "not-used"
+              : status === "Hết hạn"
+              ? "expired"
+              : ""
+          }
+        >
+          <Icon icon="ion:ellipse" style={{ marginRight: "8px" }} />
+          {status}
+        </span>
+      ),
+    },
+    {
+      title: "Ngày sử dụng",
+      dataIndex: "usageDate",
+      key: "usageDate",
+    },
+    {
+      title: "Ngày xuất vé",
+      dataIndex: "ticketDate",
+      key: "ticketDate",
+    },
+    {
+      title: "Cổng check-in",
+      dataIndex: "checkInGate",
+      key: "checkInGate",
+      render: (gate: any) => (gate ? gate : <span>-</span>),
+    },
+
+    {
+      title: "",
+      key: "actions",
+      render: (text: any, ticket: TicketData) => (
+        <td className="icon-cell">
+          {ticket.usageStatus === "Chưa sử dụng" && !ticket.checkInGate ? (
+            <Space wrap>
+              {customColors.map((color) => (
+                <Tooltip
+                  placement="left"
+                  title={
+                    <div className="tooltip-content">
+                      <Button className="tooltip-button">Sử dụng vé</Button>
+                      <Button className="tooltip-button">
+                        Đổi ngày sử dụng
+                      </Button>
+                    </div>
+                  }
+                  color={color}
+                  key={color}
+                >
+                  <Icon icon="nimbus:ellipsis" />
+                </Tooltip>
+              ))}
+            </Space>
+          ) : ticket.usageStatus === "Đã sử dụng" ||
+            ticket.usageStatus === "Hết hạn" ? (
+            ""
+          ) : (
+            ticket.checkInGate
+          )}
+        </td>
+      ),
+    },
+  ];
+
   const currentPage = useSelector(
     (state: RootState) => state.ticketPack.currentPage
   );
-
-  const [filteredTickets, setFilteredTickets] = useState([] as TicketData[]);
-  const [selectedGates, setSelectedGates] = useState<string[]>([]);
-
-  const [isFiltered, setIsFiltered] = useState(false);
-
-  const rowsPerPage = 6;
-
-  const startIndex: number = (currentPage - 1) * rowsPerPage;
-
-  const calculateIndex = (index: number): number => startIndex + index + 1;
-
   const filterValue = useSelector(
     (state: RootState) => state.ticket.filterValue
   );
@@ -62,6 +189,15 @@ const Ticket: React.FC = () => {
     (state: RootState) => state.ticket.showOverlay
   );
   const dispatch = useDispatch();
+
+  const [filteredTickets, setFilteredTickets] = useState([] as TicketData[]);
+  const [selectedGates, setSelectedGates] = useState<string[]>([]);
+  const [isFiltered, setIsFiltered] = useState(false);
+
+  const rowsPerPage = 4;
+  const startIndex: number = (currentPage - 1) * rowsPerPage;
+
+  const calculateIndex = (index: number): number => startIndex + index + 1;
 
   useEffect(() => {
     const fetchTickets = async () => {
@@ -125,9 +261,12 @@ const Ticket: React.FC = () => {
     document.body.removeChild(link);
   };
 
-  const [displayMode, setDisplayMode] = useState<"GD" | "SK">("GD");
-
   const handleDisplayModeChange = (mode: "GD" | "SK") => {
+    setIsFiltered(false);
+    setFilteredTickets([]); // Reset lại state filteredTickets
+    dispatch(setCurrentPage(1)); // Reset lại trang hiện tại về trang đầu tiên
+    dispatch(setFilterValue(["tatcacong"])); // Reset lại giá trị lọc về "Tất cả"
+    dispatch(setDefaultValue("tatca")); // Reset lại giá trị mặc định về "Tất cả"
     setDisplayMode(mode);
   };
 
@@ -158,6 +297,14 @@ const Ticket: React.FC = () => {
   const filterTickets = useCallback(
     (tickets: TicketData[], filterValue: string[], defaultValue: string) => {
       return tickets.filter((ticket) => {
+        // Lọc theo ticketType
+        if (
+          (displayMode === "GD" && ticket.ticketType !== "GD") ||
+          (displayMode === "SK" && ticket.ticketType !== "SK")
+        ) {
+          return false;
+        }
+
         // Lọc theo trạng thái sử dụng
         if (defaultValue === "tatca") {
           return true;
@@ -181,13 +328,13 @@ const Ticket: React.FC = () => {
         return false;
       });
     },
-    []
+    [displayMode]
   );
 
   // Hàm xử lý sự kiện khi người dùng nhấp vào nút "Lọc"
   const handleFilterClick = () => {
     const filteredTickets = filterTickets(tickets, filterValue, defaultValue);
-    setFilteredTickets(filteredTickets);
+    setFilteredTickets(filteredTickets); // Cập nhật state filteredTickets sau khi lọc dữ liệu
     setIsFiltered(true);
     dispatch(setShowOverlay(false));
   };
@@ -195,6 +342,34 @@ const Ticket: React.FC = () => {
   const handleFilterButtonClick = () => {
     dispatch(setShowOverlay(true));
   };
+
+  const options = ["Show", "Hide", "Center"];
+  const [arrow, setArrow] = useState("Show");
+
+  const mergedArrow = useMemo(() => {
+    // Your mergedArrow function code here
+  }, [arrow]);
+
+  const dataSource = useMemo(() => {
+    // Lọc và tạo mảng mới chứa các vé tương ứng với `ticketType`
+    const filteredTickets = tickets.filter((ticket) =>
+      displayMode === "GD"
+        ? ticket.ticketType === "GD"
+        : ticket.ticketType === "SK"
+    );
+
+    // Kết hợp dữ liệu từ mảng filteredTickets với các thuộc tính cần thiết cho bảng
+    return filteredTickets.map((ticket, index) => ({
+      ...ticket,
+      index: calculateIndex(index),
+    }));
+  }, [tickets, displayMode]);
+
+  const [bottom] = useState<TablePaginationPosition>("bottomCenter");
+  const filteredColumns =
+    displayMode === "GD"
+      ? columns.filter((column) => column.key !== "nameEvent")
+      : columns;
 
   return (
     <StyledTicket>
@@ -249,155 +424,22 @@ const Ticket: React.FC = () => {
                   </div>
                 </div>
               </div>
+              {/* The table component goes here */}
               <div className="ticket-table">
-                <thead>
-                  <tr className="cot">
-                    <th>STT</th>
-                    <th className="no-wrap">Booking Code</th>
-                    <th>Số vé</th>
-                    {displayMode === "SK" && (
-                      <th className="no-wrap">Tên sự kiện</th>
-                    )}
-                    <th>Tình trạng sử dụng</th>
-                    <th>Ngày sử dụng</th>
-                    <th>Ngày xuất vé</th>
-                    <th>Cổng check-in</th>
-
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {!isFiltered
-                    ? tickets
-                        .filter((ticket) =>
-                          displayMode === "GD"
-                            ? ticket.ticketType === "GD"
-                            : ticket.ticketType === "SK"
-                        )
-                        .slice(
-                          (currentPage - 1) * rowsPerPage,
-                          currentPage * rowsPerPage
-                        )
-                        .map((ticket, index) => (
-                          <tr key={index}>
-                            <td>{calculateIndex(index)}</td>
-                            <td>{ticket.bookingCode}</td>
-                            <td>{ticket.ticketNumber}</td>
-                            {displayMode === "SK" && (
-                              <td>{ticket.nameEvent}</td>
-                            )}
-                            <td>
-                              <span
-                                className={
-                                  ticket.usageStatus === "Đã sử dụng"
-                                    ? "used"
-                                    : ticket.usageStatus === "Chưa sử dụng"
-                                    ? "not-used"
-                                    : ticket.usageStatus === "Hết hạn"
-                                    ? "expired"
-                                    : ""
-                                }
-                              >
-                                <Icon
-                                  icon="ion:ellipse"
-                                  style={{ marginRight: "8px" }}
-                                />
-                                {ticket.usageStatus}
-                              </span>
-                            </td>
-                            <td>{ticket.usageDate}</td>
-                            <td>{ticket.ticketDate}</td>
-                            <td>
-                              {ticket.checkInGate ? (
-                                ticket.checkInGate
-                              ) : (
-                                <span>-</span>
-                              )}
-                            </td>
-                            <td>
-                              {ticket.usageStatus === "Chưa sử dụng" &&
-                              !ticket.checkInGate ? (
-                                <Icon icon="nimbus:ellipsis" />
-                              ) : ticket.usageStatus === "Đã sử dụng" ||
-                                ticket.usageStatus === "Hết hạn" ? (
-                                ""
-                              ) : (
-                                ticket.checkInGate
-                              )}
-                            </td>
-                          </tr>
-                        ))
-                    : filteredTickets
-                        .filter((ticket) =>
-                          displayMode === "GD"
-                            ? ticket.ticketType === "GD"
-                            : ticket.ticketType === "SK"
-                        )
-                        .slice(
-                          (currentPage - 1) * rowsPerPage,
-                          currentPage * rowsPerPage
-                        )
-                        .map((ticket, index) => (
-                          <tr key={index}>
-                            <td>{calculateIndex(index)}</td>
-                            <td>{ticket.bookingCode}</td>
-                            <td>{ticket.ticketNumber}</td>
-                            {displayMode === "SK" && (
-                              <td>{ticket.nameEvent}</td>
-                            )}
-                            <td>
-                              <span
-                                className={
-                                  ticket.usageStatus === "Đã sử dụng"
-                                    ? "used"
-                                    : ticket.usageStatus === "Chưa sử dụng"
-                                    ? "not-used"
-                                    : ticket.usageStatus === "Hết hạn"
-                                    ? "expired"
-                                    : ""
-                                }
-                              >
-                                <Icon
-                                  icon="ion:ellipse"
-                                  style={{ marginRight: "8px" }}
-                                />
-                                {ticket.usageStatus}
-                              </span>
-                            </td>
-                            <td>{ticket.usageDate}</td>
-                            <td>{ticket.ticketDate}</td>
-                            <td>
-                              {ticket.checkInGate ? (
-                                ticket.checkInGate
-                              ) : (
-                                <span>-</span>
-                              )}
-                            </td>
-                            <td>
-                              {ticket.usageStatus === "Chưa sử dụng" &&
-                              !ticket.checkInGate ? (
-                                <Icon icon="nimbus:ellipsis" />
-                              ) : ticket.usageStatus === "Đã sử dụng" ||
-                                ticket.usageStatus === "Hết hạn" ? (
-                                ""
-                              ) : (
-                                ticket.checkInGate
-                              )}
-                            </td>
-                          </tr>
-                        ))}
-                </tbody>
-
-                <div className="pagination-container pagination-fixed">
-                  <Pagination
-                    current={currentPage}
-                    pageSize={rowsPerPage}
-                    total={tickets.length}
-                    onChange={handlePageChange}
-                    className="custom-pagination"
-                  />
-                </div>
+                <Table
+                  columns={filteredColumns}
+                  dataSource={isFiltered ? filteredTickets : dataSource}
+                  pagination={{
+                    position: [bottom],
+                    current: currentPage,
+                    pageSize: rowsPerPage,
+                    total: tickets.length,
+                    onChange: handlePageChange,
+                    className: "custom-pagination",
+                  }}
+                />
               </div>
+              {/* End of table component */}
             </div>
           </div>
         </div>
@@ -518,4 +560,4 @@ const Ticket: React.FC = () => {
   );
 };
 
-export default Ticket;
+export default TableWithPagination;

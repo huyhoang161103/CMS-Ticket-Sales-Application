@@ -9,6 +9,7 @@ import "bootstrap/dist/js/bootstrap.bundle";
 import Ticketpack from "./pages/Ticketpack";
 import { Provider } from "react-redux";
 import store from "./features/store";
+import TableTest from "./test/TableTest";
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="/manage-tickets" element={<Ticket />} />
         <Route path="/ticket-reconciliation" element={<TicketComparison />} />
         <Route path="/settings/service-package" element={<Ticketpack />} />
+        <Route path="/tabletest" element={<TableTest />} />
       </Routes>
     </Provider>
   );

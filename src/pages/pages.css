@@ -320,15 +320,6 @@ th:nth-child(9) {
   white-space: nowrap;
 }
 
-.ticket-table .cot th:nth-child(1),
-th:nth-child(8) {
-  border-radius: 8px 0px 0px 0px;
-}
-
-.ticket-table .cot th:nth-child(8) {
-  border-radius: 0px 8px 0px 0px;
-}
-
 .custom-pagination {
   display: flex;
   width: 100%;
@@ -458,4 +449,43 @@ th:nth-child(8) {
 
 .red {
   color: red;
+}
+
+.icon-cell {
+  position: relative;
+}
+
+.icon-cell:hover:before {
+  content: "";
+  position: absolute;
+  left: -100px; /* Thay đổi khoảng cách bên trái tùy ý */
+  top: 0;
+  width: 100px; /* Thay đổi độ rộng tùy ý */
+  height: 100%;
+}
+
+.icon-cell:hover .hover-content {
+  display: block;
+}
+
+.tooltip-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.tooltip-button {
+  background: var(--yellow-05, #ffd2a8);
+  color: var(--text, #1e0d03);
+  border: none;
+  /* 14 medium */
+  font-family: monospace;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 22px; /* 157.143% */
+  text-align: left;
+  box-shadow: none;
+  display: block;
+  margin-bottom: 5px;
+  /* Thêm các kiểu tùy chỉnh khác cho nút của bạn */
 }
