@@ -200,11 +200,43 @@ const TableWithPagination: React.FC = () => {
   const [filteredTickets, setFilteredTickets] = useState([] as TicketData[]);
   const [selectedGates, setSelectedGates] = useState<string[]>([]);
   const [isFiltered, setIsFiltered] = useState(false);
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
   const rowsPerPage = 4;
   const startIndex: number = (currentPage - 1) * rowsPerPage;
+  const [counter, setCounter] = useState<number>(0); // Khởi tạo biến đếm và đặt giá trị ban đầu là 0.
+
+  // Hàm tính lại STT khi hiển thị kết quả lọc
+  const calculateFilteredIndex = (index: number): number =>
+    startIndex + index + 1;
 
   const calculateIndex = (index: number): number => startIndex + index + 1;
+
+  const filterSearchResults = (searchTerm: string) => {
+    const searchResults = tickets.filter((ticket) =>
+      ticket.ticketNumber.includes(searchTerm)
+    );
+
+    // Kiểm tra xem có từ khóa tìm kiếm hay không. Nếu không có, sử dụng nguồn dữ liệu gốc.
+    const filteredData = searchTerm ? searchResults : dataSource;
+
+    // Cập nhật lại STT cho kết quả lọc
+    const filteredWithIndex = filteredData.map((ticket, index) => ({
+      ...ticket,
+      index: calculateFilteredIndex(index),
+    }));
+
+    setFilteredTickets(filteredWithIndex);
+    setIsFiltered(!!searchTerm); // Đặt thành true nếu có từ khóa tìm kiếm.
+    setCounter(0); // Reset lại biến đếm khi thực hiện tìm kiếm.
+  };
+
+  const handleSearchInputChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setSearchTerm(event.target.value);
+    filterSearchResults(event.target.value); // Kích hoạt tìm kiếm dựa trên giá trị nhập vào.
+  };
 
   useEffect(() => {
     const fetchTickets = async () => {
@@ -372,12 +404,23 @@ const TableWithPagination: React.FC = () => {
         ? ticket.ticketType === "GD"
         : ticket.ticketType === "SK"
     );
-    // Kết hợp dữ liệu từ mảng filteredTickets với các thuộc tính cần thiết cho bảng
-    return filteredTickets.map((ticket, index) => ({
+
+    // Kiểm tra nếu có kết quả tìm kiếm thì sử dụng kết quả đã tìm kiếm, nếu không thì sử dụng dữ liệu nguồn ban đầu
+    const dataToUse = isFiltered
+      ? filteredTickets
+      : filteredTickets.map((ticket, index) => ({
+          ...ticket,
+          index: calculateIndex(index),
+        }));
+
+    // Tính lại STT cho kết quả lọc
+    const dataWithFilteredIndex = dataToUse.map((ticket, index) => ({
       ...ticket,
-      index: calculateIndex(index),
+      index: isFiltered ? calculateFilteredIndex(index) : calculateIndex(index),
     }));
-  }, [tickets, displayMode]);
+
+    return dataWithFilteredIndex;
+  }, [tickets, displayMode, isFiltered, filteredTickets]);
 
   const [bottom] = useState<TablePaginationPosition>("bottomCenter");
 
@@ -423,6 +466,8 @@ const TableWithPagination: React.FC = () => {
                     type="text"
                     className="form-control"
                     placeholder="Tìm bằng số vé"
+                    value={searchTerm}
+                    onChange={handleSearchInputChange}
                   />
                   <Icon
                     icon="material-symbols:search"
