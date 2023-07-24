@@ -2,6 +2,7 @@ import React from "react";
 import styled from "styled-components";
 import Navbar from "../components/navbar";
 import SearchNotificationBar from "../components/search";
+import "./pages.css";
 import {
   AreaChart,
   Area,
@@ -13,7 +14,9 @@ import {
   PieChart,
   Pie,
   Cell,
+  Label,
 } from "recharts";
+import { DatePicker, Space } from "antd";
 
 const StyledHome = styled.div`
   background-color: #f9f6f4;
@@ -54,6 +57,10 @@ const Home: React.FC = () => {
   // Màu cam cho biểu đồ sóng
   const waveColor = "#FF993C";
 
+  const onChange = (date: any, dateString: string) => {
+    console.log(date, dateString);
+  };
+
   return (
     <StyledHome>
       <div className="app">
@@ -66,8 +73,22 @@ const Home: React.FC = () => {
                 <h2 className="noo-sh-title">Thống kê</h2>
               </div>
               <div>
-                <div className="col">Doanh thu</div>
-                <AreaChart width={1112} height={230} data={data}>
+                <div className="row mb-3">
+                  <div className="col-6">
+                    <h5>Doanh thu</h5>
+                  </div>
+                  <div className="col-6 d-flex justify-content-end">
+                    <Space>
+                      <DatePicker
+                        onChange={onChange}
+                        format="MM/YYYY"
+                        picker="month"
+                      />
+                    </Space>
+                  </div>
+                </div>
+
+                <AreaChart width={1166} height={230} data={data}>
                   <XAxis dataKey="name" />
                   <YAxis />
                   <CartesianGrid strokeDasharray="3 3" />
@@ -89,47 +110,82 @@ const Home: React.FC = () => {
                     </linearGradient>
                   </defs>
                 </AreaChart>
-
-                <ChartContainer>
-                  <div>
-                    <h5>Vé Gia Đình</h5>
-                    <PieChart width={230} height={230}>
-                      <Pie
-                        dataKey="gd"
-                        data={dataCircleGD}
-                        cx={115}
-                        cy={115}
-                        outerRadius={90}
-                        innerRadius={30}
-                        labelLine={false}
-                      >
-                        {dataCircleGD.map((entry, index) => (
-                          <Cell key={index} fill={entry.fill} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
+                <div className="hi">
+                  <p>Tổng doanh thu theo tuần</p>
+                  <div className="">
+                    <h3>
+                      545.000.000 <span className="vnd">Đồng</span>
+                    </h3>
                   </div>
-                  <div>
-                    <h5>Vé Siwk kiện</h5>
-                    <PieChart width={230} height={230}>
-                      <Pie
-                        dataKey="sk"
-                        data={dataCircleSK}
-                        cx={115}
-                        cy={115}
-                        outerRadius={90}
-                        innerRadius={30}
-                        labelLine={false}
-                      >
-                        {dataCircleSK.map((entry, index) => (
-                          <Cell key={index} fill={entry.fill} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
+                </div>
+                <div className="row mt-4">
+                  <div className="col-2">
+                    <Space>
+                      <DatePicker
+                        onChange={onChange}
+                        format="MM/YYYY"
+                        picker="month"
+                      />
+                    </Space>
                   </div>
-                </ChartContainer>
+                  <div className="col-7">
+                    {" "}
+                    <ChartContainer>
+                      <div className="pie-chart1">
+                        <h5 className="title-chart">Vé Gia Đình</h5>
+                        <PieChart width={230} height={230}>
+                          <Pie
+                            dataKey="gd"
+                            data={dataCircleGD}
+                            cx={115}
+                            cy={115}
+                            outerRadius={90}
+                            innerRadius={30}
+                            labelLine={false}
+                          >
+                            {dataCircleGD.map((entry, index) => (
+                              <Cell key={index} fill={entry.fill} />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                        </PieChart>
+                      </div>
+                      <div>
+                        <h5 className="title-chart">Vé Sự Kiện</h5>
+                        <PieChart width={230} height={230}>
+                          <Pie
+                            dataKey="sk"
+                            data={dataCircleSK}
+                            cx={115}
+                            cy={115}
+                            outerRadius={90}
+                            innerRadius={30}
+                            labelLine={false}
+                          >
+                            {dataCircleSK.map((entry, index) => (
+                              <Cell key={index} fill={entry.fill} />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                        </PieChart>
+                      </div>
+                    </ChartContainer>
+                  </div>
+                  <div className="col-auto">
+                    <div className="row align-items-center mb-4">
+                      <div className="col-auto use"></div>
+                      <div className="col-auto">
+                        <span>Chưa sử dụng</span>
+                      </div>
+                    </div>
+                    <div className="row align-items-center">
+                      <div className="col-auto no-use"></div>
+                      <div className="col-auto">
+                        <span>Đã sử dụng</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

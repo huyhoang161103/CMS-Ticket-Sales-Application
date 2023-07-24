@@ -271,6 +271,21 @@
   border: 1px solid var(--yellow-1, #ff993c);
 }
 
+.filter-ticket .filter-filter-2 {
+  background-color: #ff993c;
+  color: var(--yellow-1, white);
+  font-family: monospace;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 26px;
+  height: 48px;
+  padding: 11px 55px;
+  gap: 10px;
+  border-radius: 6px;
+  border: 1px solid var(--yellow-1, #ff993c);
+}
+
 .icon-ticket {
   width: 24px;
   height: 24px;
@@ -410,6 +425,14 @@ th:nth-child(9) {
   border-radius: 8px;
 }
 
+.overlay-content-2 {
+  width: 634px;
+  height: 400px;
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+}
+
 .overlay-content-1 {
   width: 634px;
   height: 432px;
@@ -487,5 +510,30 @@ th:nth-child(9) {
   box-shadow: none;
   display: block;
   margin-bottom: 5px;
-  /* Thêm các kiểu tùy chỉnh khác cho nút của bạn */
+}
+
+.vnd {
+  font-size: 15px;
+}
+.use {
+  background-color: #4f75ff;
+  width: 44px;
+  height: 20px;
+  border-radius: 4px;
+}
+
+.no-use {
+  background-color: #ff8a48;
+  width: 44px;
+  height: 20px;
+  border-radius: 4px;
+}
+
+.pie-chart1 {
+  padding-right: 100px;
+  padding-left: 50px;
+}
+
+.title-chart {
+  text-align: center;
 }

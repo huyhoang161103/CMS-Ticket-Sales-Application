@@ -16,7 +16,7 @@ import { Icon } from "@iconify/react";
 import styled from "styled-components";
 import { RootState } from "../features/store";
 import { firestore } from "../firebase/config";
-import { TicketData } from "../features/ticketSlice";
+import { TicketData, setShowDateChangeOverlay } from "../features/ticketSlice";
 import {
   setTickets,
   setShowOverlay,
@@ -152,7 +152,10 @@ const TableWithPagination: React.FC = () => {
                   title={
                     <div className="tooltip-content">
                       <Button className="tooltip-button">Sử dụng vé</Button>
-                      <Button className="tooltip-button">
+                      <Button
+                        className="tooltip-button"
+                        onClick={openDateChangeOverlay}
+                      >
                         Đổi ngày sử dụng
                       </Button>
                     </div>
@@ -187,6 +190,10 @@ const TableWithPagination: React.FC = () => {
   const tickets = useSelector((state: RootState) => state.ticket.tickets);
   const showOverlay = useSelector(
     (state: RootState) => state.ticket.showOverlay
+  );
+
+  const showDateChangeOverlay = useSelector(
+    (state: RootState) => state.ticket.showDateChangeOverlay
   );
   const dispatch = useDispatch();
 
@@ -343,6 +350,14 @@ const TableWithPagination: React.FC = () => {
     dispatch(setShowOverlay(true));
   };
 
+  const openDateChangeOverlay = () => {
+    dispatch(setShowDateChangeOverlay(true));
+  };
+
+  const closeDateChangeOverlay = () => {
+    dispatch(setShowDateChangeOverlay(false));
+  };
+
   const options = ["Show", "Hide", "Center"];
   const [arrow, setArrow] = useState("Show");
 
@@ -357,7 +372,6 @@ const TableWithPagination: React.FC = () => {
         ? ticket.ticketType === "GD"
         : ticket.ticketType === "SK"
     );
-
     // Kết hợp dữ liệu từ mảng filteredTickets với các thuộc tính cần thiết cho bảng
     return filteredTickets.map((ticket, index) => ({
       ...ticket,
@@ -366,6 +380,7 @@ const TableWithPagination: React.FC = () => {
   }, [tickets, displayMode]);
 
   const [bottom] = useState<TablePaginationPosition>("bottomCenter");
+
   const filteredColumns =
     displayMode === "GD"
       ? columns.filter((column) => column.key !== "nameEvent")
@@ -551,6 +566,47 @@ const TableWithPagination: React.FC = () => {
             <div className="filter pt-4">
               <div className="filter-ticket">
                 <button onClick={handleFilterClick}>Lọc</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {showDateChangeOverlay && (
+        <div className="overlay">
+          <div className="overlay-content-2">
+            <h4 className="title-chart">Đổi ngày sử dụng vé</h4>
+            <div className="overlay-filter mt-5">
+              <div className="row">
+                <div className="col-4">Số vé</div>
+                <div className="col">12345</div>
+              </div>
+              <div className="row mt-4">
+                <div className="col-4">Số vé</div>
+                <div className="col">Vé cổng - Gói sự kiện</div>
+              </div>
+              <div className="row mt-4">
+                <div className="col-4">Tên sự kiện</div>
+                <div className="col">Hội chợ triển lãm hàng đầu 2021</div>
+              </div>
+              <div className="row mt-4">
+                <div className="col-4">Hạn sử dụng</div>
+                <div className="col">
+                  {" "}
+                  <Space direction="vertical">
+                    <DatePicker onChange={onChange} format="DD/MM/YYYY" />
+                  </Space>
+                </div>
+              </div>
+            </div>
+            <div className="pt-4">
+              <div className="filter-ticket">
+                <button onClick={closeDateChangeOverlay}>Hủy</button>
+                <button
+                  onClick={closeDateChangeOverlay}
+                  className="filter-filter-2"
+                >
+                  Lưu
+                </button>
               </div>
             </div>
           </div>

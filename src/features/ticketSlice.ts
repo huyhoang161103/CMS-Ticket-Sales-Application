@@ -16,6 +16,7 @@ interface TicketState {
   defaultValue: string;
   tickets: TicketData[];
   showOverlay: boolean;
+  showDateChangeOverlay: boolean;
 }
 
 const initialState: TicketState = {
@@ -23,6 +24,7 @@ const initialState: TicketState = {
   defaultValue: "tatca",
   tickets: [],
   showOverlay: false,
+  showDateChangeOverlay: false,
 };
 
 const ticketSlice = createSlice({
@@ -45,6 +47,9 @@ const ticketSlice = createSlice({
     setShowOverlay: (state, action: PayloadAction<boolean>) => {
       state.showOverlay = action.payload;
     },
+    setShowDateChangeOverlay: (state, action: PayloadAction<boolean>) => {
+      state.showDateChangeOverlay = action.payload;
+    },
   },
 });
 
@@ -56,7 +61,12 @@ export const setFilterValues = (
   payload: { filterValue, defaultValue },
 });
 
-export const { setFilterValue, setDefaultValue, setTickets, setShowOverlay } =
-  ticketSlice.actions;
+export const {
+  setFilterValue,
+  setDefaultValue,
+  setTickets,
+  setShowOverlay,
+  setShowDateChangeOverlay,
+} = ticketSlice.actions;
 
 export default ticketSlice.reducer;
