@@ -17,6 +17,7 @@ import {
   Pagination,
   Select,
   Space,
+  Table,
   TimePicker,
 } from "antd";
 import { Icon } from "@iconify/react";
@@ -27,7 +28,90 @@ const StyledTicketpack = styled.div`
   background-color: #f9f6f4;
 `;
 
+type TablePaginationPosition =
+  | "topLeft"
+  | "topCenter"
+  | "topRight"
+  | "bottomLeft"
+  | "bottomCenter"
+  | "bottomRight";
+
 const Ticketpack: React.FC = () => {
+  const columns = [
+    {
+      title: "STT",
+      dataIndex: "index",
+      key: "index",
+    },
+    {
+      title: "Mã gói",
+      dataIndex: "packageCode",
+      key: "packageCode",
+      className: "no-wrap",
+    },
+    {
+      title: "Tên gói vé",
+      dataIndex: "packageName",
+      key: "packageName",
+      className: "no-wrap",
+    },
+    {
+      title: "Ngày áp dụng",
+      dataIndex: "applicationDate",
+      key: "applicationDate",
+      className: "no-wrap",
+    },
+    {
+      title: "Ngày hết hạn",
+      dataIndex: "expirationDate",
+      key: "expirationDate",
+    },
+    {
+      title: "Giá vé (VNĐ/Vé)",
+      dataIndex: "ticketPrice",
+      key: "ticketPrice",
+      render: (text: string) => `${text}₫`,
+    },
+    {
+      title: "Giá combo (VNĐ/Combo)",
+      dataIndex: "comboPrice",
+      key: "comboPrice",
+      render: (text: string) => `${text}₫`,
+    },
+    {
+      title: "Tình trạng",
+      dataIndex: "status",
+      key: "status",
+      render: (text: string) => (
+        <div className="no-wrap">
+          <span
+            className={`status-icon ${
+              text === "Đang áp dụng"
+                ? "not-used"
+                : text === "Tắt"
+                ? "expired"
+                : ""
+            }`}
+          >
+            <Icon icon="ion:ellipse" style={{ marginRight: "8px" }} />
+            {text}
+          </span>
+        </div>
+      ),
+    },
+    {
+      title: "",
+      dataIndex: "editButton",
+      key: "editButton",
+      render: () => (
+        <span className="no-wrap1" onClick={handleEditTicketPack}>
+          <Icon icon="lucide:edit" />
+          Cập nhật
+        </span>
+      ),
+    },
+  ];
+
   const dispatch = useDispatch();
   const ticketPacks = useSelector(
     (state: RootState) => state.ticketPack.ticketPacks
@@ -137,6 +221,8 @@ const Ticketpack: React.FC = () => {
     setShowOverlay(false);
   };
 
+  const [bottom] = useState<TablePaginationPosition>("bottomCenter");
+
   return (
     <StyledTicketpack>
       <div className="app">
@@ -172,68 +258,23 @@ const Ticketpack: React.FC = () => {
                 </div>
               </div>
               <div className="ticket-table">
-                <thead>
-                  <tr className="cot">
-                    <th>STT</th>
-                    <th className="no-wrap">Mã gói</th>
-                    <th>Tên gói vé</th>
-                    <th>Ngày áp dụng</th>
-                    <th>Ngày hết hạn</th>
-                    <th>Giá vé (VNĐ/Vé)</th>
-                    <th>Giá combo (VNĐ/Combo)</th>
-                    <th>Tình trạng</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {ticketPacks
-                    .slice(
-                      (currentPage - 1) * rowsPerPage,
-                      currentPage * rowsPerPage
-                    )
-                    .map((ticketPack, index) => (
-                      <tr key={index}>
-                        <td>{calculateIndex(index)}</td>
-                        <td>{ticketPack.packageCode}</td>
-                        <td className="no-wrap">{ticketPack.packageName}</td>
-                        <td>{ticketPack.applicationDate}</td>
-                        <td>{ticketPack.expirationDate}</td>
-                        <td>{ticketPack.ticketPrice}&#8363;</td>
-                        <td>{ticketPack.comboPrice}&#8363;</td>
-                        <td className="no-wrap">
-                          <span
-                            className={
-                              ticketPack.status === "Đang áp dụng"
-                                ? "not-used"
-                                : ticketPack.status === "Tắt"
-                                ? "expired"
-                                : ""
-                            }
-                          >
-                            <Icon
-                              icon="ion:ellipse"
-                              style={{ marginRight: "8px" }}
-                            />
-                            {ticketPack.status}
-                          </span>
-                        </td>
-                        <td className="no-wrap1" onClick={handleEditTicketPack}>
-                          <Icon icon="lucide:edit" />
-                          Cập nhật
-                        </td>
-                      </tr>
-                    ))}
-                </tbody>
-
-                <div className="pagination-container pagination-fixed">
-                  <Pagination
-                    current={currentPage}
-                    pageSize={rowsPerPage}
-                    total={ticketPacks.length}
-                    onChange={handlePageChange}
-                    className="custom-pagination"
-                  />
-                </div>
+                <Table
+                  columns={columns}
+                  dataSource={ticketPacks.map((ticketPack, index) => ({
+                    ...ticketPack,
+                    index: calculateIndex(index),
+                    key: ticketPack.packageCode,
+                    editButton: null,
+                  }))}
+                  pagination={{
+                    position: [bottom],
+                    current: currentPage,
+                    pageSize: rowsPerPage,
+                    total: ticketPacks.length,
+                    onChange: handlePageChange,
+                    className: "custom-pagination",
+                  }}
+                />
               </div>
             </div>
           </div>

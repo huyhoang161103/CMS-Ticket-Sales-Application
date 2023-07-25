@@ -200,7 +200,6 @@ const TableWithPagination: React.FC = () => {
   const [filteredTickets, setFilteredTickets] = useState([] as TicketData[]);
   const [selectedGates, setSelectedGates] = useState<string[]>([]);
   const [isFiltered, setIsFiltered] = useState(false);
-  const [searchTerm, setSearchTerm] = useState<string>("");
 
   const rowsPerPage = 4;
   const startIndex: number = (currentPage - 1) * rowsPerPage;
@@ -211,6 +210,8 @@ const TableWithPagination: React.FC = () => {
     startIndex + index + 1;
 
   const calculateIndex = (index: number): number => startIndex + index + 1;
+
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
   const filterSearchResults = (searchTerm: string) => {
     const searchResults = tickets.filter((ticket) =>

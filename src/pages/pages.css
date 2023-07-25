@@ -537,3 +537,10 @@ th:nth-child(9) {
 .title-chart {
   text-align: center;
 }
+.reconciliation-status-red {
+  color: red;
+}
+.reconciliation-status-italic-gray {
+  color: gray;
+  font-style: italic;
+}

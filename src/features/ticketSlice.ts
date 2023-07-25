@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 export interface TicketData {
+  id: string;
   bookingCode: string;
   ticketNumber: string;
   usageStatus: string;
@@ -9,6 +10,7 @@ export interface TicketData {
   checkInGate: string;
   ticketType: String;
   nameEvent: String;
+  reconciliationStatus: string;
 }
 
 interface TicketState {
