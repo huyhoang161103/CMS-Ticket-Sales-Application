@@ -544,3 +544,6 @@ th:nth-child(9) {
   color: gray;
   font-style: italic;
 }
+.table-cell-content {
+  white-space: normal; /* Cho phép nội dung trong cell của Table nhảy dòng */
+}

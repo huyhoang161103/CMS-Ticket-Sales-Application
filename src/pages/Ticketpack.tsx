@@ -57,14 +57,30 @@ const Ticketpack: React.FC = () => {
     },
     {
       title: "Ngày áp dụng",
-      dataIndex: "applicationDate",
-      key: "applicationDate",
+      key: "usageDateTime",
       className: "no-wrap",
+      render: (
+        text: any,
+        record: { applicationDate: any; applicationTime: any }
+      ) => {
+        const applicationDate = record.applicationDate;
+        const applicationTime = record.applicationTime;
+        const usageDateTime = `${applicationDate} ${applicationTime}`;
+        return <div className="table-cell-content">{usageDateTime}</div>;
+      },
     },
     {
       title: "Ngày hết hạn",
-      dataIndex: "expirationDate",
-      key: "expirationDate",
+      key: "expirationDateTime",
+      render: (
+        text: any,
+        record: { expirationDate: any; expirationTime: any }
+      ) => {
+        const expirationDate = record.expirationDate;
+        const expirationTime = record.expirationTime;
+        const expirationDateTime = `${expirationDate} ${expirationTime} `;
+        return <span>{expirationDateTime}</span>;
+      },
     },
     {
       title: "Giá vé (VNĐ/Vé)",
@@ -113,26 +129,41 @@ const Ticketpack: React.FC = () => {
   ];
 
   const dispatch = useDispatch();
+
   const ticketPacks = useSelector(
     (state: RootState) => state.ticketPack.ticketPacks
   );
+
   const currentPage = useSelector(
     (state: RootState) => state.ticketPack.currentPage
   );
 
   const [packageName, setPackageName] = useState("");
+
   const [applicationDate, setApplicationDate] = useState<Date | null>(null);
+
   const [expirationDate, setExpirationDate] = useState<Date | null>(null);
+
+  const [selectedApplicationTime, setSelectedApplicationTime] =
+    useState<Date | null>(null);
+
+  const [selectedExpirationTime, setSelectedExpirationTime] =
+    useState<Date | null>(null);
+
   const [ticketPrice, setTicketPrice] = useState("");
+
   const [comboPrice, setComboPrice] = useState("");
+
   const [status, setStatus] = useState("");
-  const rowsPerPage = 6;
+
+  const rowsPerPage = 4;
 
   const startIndex: number = (currentPage - 1) * rowsPerPage;
 
   const calculateIndex = (index: number): number => startIndex + index + 1;
 
   const [showOverlay, setShowOverlay] = useState(false);
+
   const [selectedTicketPack, setSelectedTicketPack] = useState(false);
 
   const generatePackageCode = () => {
@@ -146,6 +177,14 @@ const Ticketpack: React.FC = () => {
 
   const onChange: DatePickerProps["onChange"] = (date, dateString) => {
     console.log(date, dateString);
+  };
+
+  const handleApplicationTimeChange = (time: any) => {
+    setSelectedApplicationTime(time?.toDate() || null);
+  };
+
+  const handleExpirationTimeChange = (time: any) => {
+    setSelectedExpirationTime(time?.toDate() || null);
   };
 
   useEffect(() => {
@@ -166,6 +205,7 @@ const Ticketpack: React.FC = () => {
 
   const handleSaveOverlay = async () => {
     const packageCode = generatePackageCode();
+
     const ticketPackData: TicketPack = {
       packageCode,
       packageName,
@@ -174,6 +214,8 @@ const Ticketpack: React.FC = () => {
       ticketPrice,
       comboPrice,
       status,
+      expirationTime: selectedExpirationTime?.toLocaleTimeString() ?? "",
+      applicationTime: selectedApplicationTime?.toLocaleTimeString() ?? "",
     };
 
     try {
@@ -483,7 +525,10 @@ const Ticketpack: React.FC = () => {
                     </div>
                     <div className="col">
                       <Space wrap>
-                        <TimePicker use12Hours onChange={onChange} />
+                        <TimePicker
+                          use12Hours
+                          onChange={handleApplicationTimeChange}
+                        />
                       </Space>
                     </div>
                   </div>
@@ -503,7 +548,10 @@ const Ticketpack: React.FC = () => {
                     </div>
                     <div className="col">
                       <Space wrap>
-                        <TimePicker use12Hours onChange={onChange} />
+                        <TimePicker
+                          use12Hours
+                          onChange={handleExpirationTimeChange}
+                        />
                       </Space>
                     </div>
                   </div>

@@ -8,6 +8,8 @@ export interface TicketPack {
   packageName: string;
   status: string;
   ticketPrice: string;
+  expirationTime: string;
+  applicationTime: string;
 }
 
 interface TicketpackState {
