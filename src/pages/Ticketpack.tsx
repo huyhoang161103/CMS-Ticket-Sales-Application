@@ -26,10 +26,24 @@ import { Icon } from "@iconify/react";
 import Navbar from "../components/navbar";
 import SearchNotificationBar from "../components/search";
 import moment from "moment";
+import dayjs from "dayjs";
 
 const StyledTicketpack = styled.div`
   background-color: #f9f6f4;
 `;
+
+type CSVDataRow = [
+  number,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string
+];
+
+type CSVContent = string;
 
 type TablePaginationPosition =
   | "topLeft"
@@ -209,14 +223,6 @@ const Ticketpack: React.FC = () => {
     console.log(date, dateString);
   };
 
-  const handleApplicationTimeChange = (time: any) => {
-    setSelectedApplicationTime(time?.toDate() || null);
-  };
-
-  const handleExpirationTimeChange = (time: any) => {
-    setSelectedExpirationTime(time?.toDate() || null);
-  };
-
   useEffect(() => {
     const fetchTicketPacks = async () => {
       try {
@@ -382,6 +388,83 @@ const Ticketpack: React.FC = () => {
   };
 
   const [bottom] = useState<TablePaginationPosition>("bottomCenter");
+  const formatDataForCSV = (data: TicketPack[]): CSVContent => {
+    const headers: string[] = [
+      "STT",
+      "Mã gói",
+      "Tên gói vé",
+      "Ngày áp dụng",
+      "Ngày hết hạn",
+      "Giá vé (VNĐ/Vé)",
+      "Giá combo (VNĐ/Combo)",
+      "Tình trạng",
+    ];
+
+    const rows: CSVDataRow[] = data.map((ticketPack, index) => [
+      index + 1,
+      ticketPack.packageCode,
+      ticketPack.packageName,
+      ticketPack.applicationDate,
+      ticketPack.expirationDate,
+      ticketPack.ticketPrice,
+      ticketPack.comboPrice,
+      ticketPack.status,
+    ]);
+
+    const csvContent =
+      headers.join(",") + "\n" + rows.map((row) => row.join(",")).join("\n");
+
+    return csvContent;
+  };
+
+  const downloadCSV = (csvContent: CSVContent, fileName: string) => {
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", fileName);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // ... (existing code)
+
+  const handleExportCSV = () => {
+    const formattedData: CSVContent = formatDataForCSV(ticketPacks);
+    const fileName = "ticketPacks.csv";
+    downloadCSV(formattedData, fileName);
+  };
+
+  const handleApplicationDateChange = (date: any, dateString: string) => {
+    setApplicationDate(date);
+  };
+
+  // ...
+
+  const handleApplicationTimeChange = (time: any) => {
+    setSelectedApplicationTime(time);
+  };
+
+  // ...
+
+  const handleExpirationDateChange = (date: any, dateString: string) => {
+    setExpirationDate(date);
+  };
+
+  // ...
+
+  const handleExpirationTimeChange = (time: any) => {
+    setSelectedExpirationTime(time);
+  };
+
+  // const handleApplicationTimeChange = (time: any) => {
+  //   setSelectedApplicationTime(time?.toDate() || null);
+  // };
+
+  // const handleExpirationTimeChange = (time: any) => {
+  //   setSelectedExpirationTime(time?.toDate() || null);
+  // };
 
   return (
     <StyledTicketpack>
@@ -399,7 +482,7 @@ const Ticketpack: React.FC = () => {
                   <input
                     type="text"
                     className="form-control"
-                    placeholder="Tìm bằng số vé"
+                    placeholder="Tìm bằng mã gói"
                   />
                   <Icon
                     icon="material-symbols:search"
@@ -407,7 +490,9 @@ const Ticketpack: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <button className="filter-filter-1">Xuất file (.CSV)</button>
+                  <button className="filter-filter-1" onClick={handleExportCSV}>
+                    Xuất file (.CSV)
+                  </button>
 
                   <button
                     onClick={handleFilterButtonClick}
@@ -479,14 +564,27 @@ const Ticketpack: React.FC = () => {
                 <div className="col">
                   <div className="row">
                     <div className="col">
-                      {" "}
                       <Space direction="vertical">
-                        <DatePicker onChange={onChange} format="DD/MM/YYYY" />
+                        <DatePicker
+                          onChange={handleApplicationDateChange}
+                          format="DD/MM/YYYY"
+                          value={
+                            applicationDate ? dayjs(applicationDate) : null
+                          }
+                        />
                       </Space>
                     </div>
                     <div className="col">
                       <Space wrap>
-                        <TimePicker use12Hours onChange={onChange} />
+                        <TimePicker
+                          use12Hours
+                          onChange={handleApplicationTimeChange}
+                          value={
+                            selectedApplicationTime
+                              ? dayjs(selectedApplicationTime)
+                              : null
+                          }
+                        />
                       </Space>
                     </div>
                   </div>
@@ -496,12 +594,24 @@ const Ticketpack: React.FC = () => {
                     <div className="col">
                       {" "}
                       <Space direction="vertical">
-                        <DatePicker onChange={onChange} format="DD/MM/YYYY" />
+                        <DatePicker
+                          onChange={handleExpirationDateChange}
+                          format="DD/MM/YYYY"
+                          value={expirationDate ? dayjs(expirationDate) : null}
+                        />
                       </Space>
                     </div>
                     <div className="col">
                       <Space wrap>
-                        <TimePicker use12Hours onChange={onChange} />
+                        <TimePicker
+                          use12Hours
+                          onChange={handleExpirationTimeChange}
+                          value={
+                            selectedExpirationTime
+                              ? dayjs(selectedExpirationTime)
+                              : null
+                          }
+                        />
                       </Space>
                     </div>
                   </div>
