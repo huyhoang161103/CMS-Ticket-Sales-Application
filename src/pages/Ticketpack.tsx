@@ -25,6 +25,7 @@ import {
 import { Icon } from "@iconify/react";
 import Navbar from "../components/navbar";
 import SearchNotificationBar from "../components/search";
+import moment from "moment";
 
 const StyledTicketpack = styled.div`
   background-color: #f9f6f4;
@@ -165,6 +166,8 @@ const Ticketpack: React.FC = () => {
 
   const [status, setStatus] = useState("");
 
+  const [shouldUpdateTicket, setShouldUpdateTicket] = useState(false);
+
   const rowsPerPage = 4;
 
   const startIndex: number = (currentPage - 1) * rowsPerPage;
@@ -178,6 +181,24 @@ const Ticketpack: React.FC = () => {
   const generatePackageCode = () => {
     const randomNumber = Math.floor(Math.random() * 100);
     return `ALT${randomNumber}`;
+  };
+
+  const generateUniquePackageCode = async () => {
+    let packageCode = generatePackageCode(); // Hàm tạo mã gói vé ngẫu nhiên
+    const ticketPackRef = firestore.collection("ticketpack");
+
+    while (true) {
+      const snapshot = await ticketPackRef
+        .where("packageCode", "==", packageCode)
+        .get();
+      if (snapshot.empty) {
+        // Nếu không có tài liệu nào trong Firestore có cùng mã gói vé
+        return packageCode; // Trả về mã gói vé duy nhất
+      }
+
+      // Nếu tìm thấy tài liệu có cùng mã gói vé, tiếp tục tạo mã mới và kiểm tra lại
+      packageCode = generatePackageCode();
+    }
   };
 
   const handleCheckboxChange = (e: CheckboxChangeEvent) => {
@@ -210,10 +231,29 @@ const Ticketpack: React.FC = () => {
     };
 
     fetchTicketPacks();
-  }, [dispatch]);
+
+    if (shouldUpdateTicket) {
+      // Gọi API hoặc thực hiện các xử lý cập nhật thông tin vé tại đây
+      // Sau khi cập nhật xong, đặt shouldUpdateTicket về lại false để ngăn việc cập nhật liên tục
+      setShouldUpdateTicket(false);
+    }
+  }, [dispatch, shouldUpdateTicket]);
 
   const handleSaveOverlay = async () => {
-    const packageCode = generatePackageCode();
+    let packageCode = generatePackageCode();
+    let isDuplicate = false;
+
+    while (true) {
+      const docRef = firestore.collection("ticketpack").doc(packageCode);
+      const doc = await docRef.get();
+      if (!doc.exists) {
+        // Nếu document không tồn tại, tạo mới và thoát vòng lặp
+        break;
+      } else {
+        // Nếu document đã tồn tại, tạo lại packageCode và kiểm tra tiếp
+        packageCode = generatePackageCode();
+      }
+    }
 
     const ticketPackData: TicketPack = {
       packageCode,
@@ -228,7 +268,10 @@ const Ticketpack: React.FC = () => {
     };
 
     try {
-      await firestore.collection("ticketpack").add(ticketPackData);
+      await firestore
+        .collection("ticketpack")
+        .doc(packageCode)
+        .set(ticketPackData);
       setShowOverlay(false);
       window.location.reload();
     } catch (error) {
@@ -256,10 +299,73 @@ const Ticketpack: React.FC = () => {
     dispatch(setCurrentPage(page));
   };
 
+  // Hàm xử lý sự kiện khi click vào nút "Lưu" để cập nhật gói vé đã chỉnh sửa
+
+  const handleUpdateTicketPack = async () => {
+    if (!selectedTicket) return; // Nếu không có vé được chọn, thoát
+
+    const updatedTicket: TicketPack = {
+      ...selectedTicket,
+      packageName,
+      applicationDate: applicationDate?.toLocaleDateString() ?? "",
+      expirationDate: expirationDate?.toLocaleDateString() ?? "",
+      ticketPrice,
+      comboPrice,
+      status,
+      expirationTime: selectedExpirationTime?.toLocaleTimeString() ?? "",
+      applicationTime: selectedApplicationTime?.toLocaleTimeString() ?? "",
+    };
+
+    try {
+      // Kiểm tra xem tài liệu tồn tại trước khi thực hiện cập nhật
+      const ticketRef = firestore
+        .collection("ticketpack")
+        .doc(selectedTicket.packageCode); // Sử dụng selectedTicket.packageCode làm document ID
+      const ticketDoc = await ticketRef.get();
+
+      if (ticketDoc.exists) {
+        // Nếu tài liệu tồn tại, thực hiện cập nhật
+        await ticketRef.update(updatedTicket);
+        setSelectedTicket(null); // Xóa bỏ vé được chọn để ẩn overlay
+        setSelectedTicketPack(false); // Đóng overlay cập nhật
+      } else {
+        console.error("Document not found:", selectedTicket.packageCode);
+        // Xử lý tài liệu không tồn tại theo ý muốn, ví dụ: thông báo lỗi, tạo tài liệu mới, v.v.
+      }
+    } catch (error) {
+      console.error("Error updating ticket pack:", error);
+    }
+    setShouldUpdateTicket(true);
+    setSelectedTicketPack(false);
+  };
+
   // Hàm xử lý sự kiện khi click vào nút "Cập nhật"
   const handleEditTicketPack = (ticket: TicketPack) => {
     setSelectedTicket(ticket);
     setPackageName(ticket.packageName);
+    setApplicationDate(
+      ticket.applicationDate
+        ? moment(ticket.applicationDate, "DD/MM/YYYY").toDate()
+        : null
+    );
+    setSelectedApplicationTime(
+      ticket.applicationTime
+        ? moment(ticket.applicationTime, "hh:mm a").toDate()
+        : null
+    );
+    setExpirationDate(
+      ticket.expirationDate
+        ? moment(ticket.expirationDate, "DD/MM/YYYY").toDate()
+        : null
+    );
+    setSelectedExpirationTime(
+      ticket.expirationTime
+        ? moment(ticket.expirationTime, "hh:mm a").toDate()
+        : null
+    );
+    setTicketPrice(ticket.ticketPrice);
+    setComboPrice(ticket.comboPrice);
+    setStatus(ticket.status);
     setSelectedTicketPack(true);
   };
 
@@ -352,7 +458,10 @@ const Ticketpack: React.FC = () => {
               </div>
               <div className="row pt-1">
                 <div className="col">
-                  <Input />
+                  <Input
+                    value={packageName}
+                    onChange={(e) => setPackageName(e.target.value)}
+                  />
                 </div>
                 <div className="col">
                   <Input />
@@ -407,7 +516,11 @@ const Ticketpack: React.FC = () => {
                   <Checkbox onChange={handleCheckboxChange}>
                     Vé lẻ (vnđ/vé) với giá
                   </Checkbox>
-                  <Input style={{ width: "20%" }} />
+                  <Input
+                    style={{ width: "20%" }}
+                    value={ticketPrice}
+                    onChange={(e) => setTicketPrice(e.target.value)}
+                  />
                   /vé
                 </div>
               </div>
@@ -416,7 +529,11 @@ const Ticketpack: React.FC = () => {
                   <Checkbox onChange={handleCheckboxChange}>
                     Combo vé với giá
                   </Checkbox>
-                  <Input style={{ width: "20%" }} />
+                  <Input
+                    style={{ width: "20%" }}
+                    value={comboPrice}
+                    onChange={(e) => setComboPrice(e.target.value)}
+                  />
                   /
                   <Input style={{ width: "20%" }} />
                   /vé
@@ -432,7 +549,8 @@ const Ticketpack: React.FC = () => {
                     showSearch
                     placeholder="Select a person"
                     optionFilterProp="children"
-                    onChange={handleSelectChange}
+                    value={status}
+                    onChange={(value) => setStatus(value)}
                     onSearch={onSearch}
                     filterOption={(input, option) =>
                       (option?.label ?? "")
@@ -441,11 +559,11 @@ const Ticketpack: React.FC = () => {
                     }
                     options={[
                       {
-                        value: "dangapdung",
+                        value: "Đang áp dụng",
                         label: "Đang áp dụng",
                       },
                       {
-                        value: "tat",
+                        value: "Tắt",
                         label: "Tắt",
                       },
                     ]}
@@ -467,7 +585,12 @@ const Ticketpack: React.FC = () => {
                   Hủy
                 </button>
 
-                <button className="filter-filter-4">Lưu</button>
+                <button
+                  className="filter-filter-4"
+                  onClick={handleUpdateTicketPack}
+                >
+                  Lưu
+                </button>
               </div>
             </div>
           </div>
