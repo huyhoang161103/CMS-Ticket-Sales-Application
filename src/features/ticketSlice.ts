@@ -52,7 +52,22 @@ const ticketSlice = createSlice({
     setShowDateChangeOverlay: (state, action: PayloadAction<boolean>) => {
       state.showDateChangeOverlay = action.payload;
     },
+    updateUsageDate: (
+      state,
+      action: PayloadAction<{ ticketNumber: string; usageDate: string }>
+    ) => {
+      const { ticketNumber, usageDate } = action.payload;
+      const updatedTickets = state.tickets.map((ticket) =>
+        ticket.ticketNumber === ticketNumber ? { ...ticket, usageDate } : ticket
+      );
+      state.tickets = updatedTickets;
+    },
   },
+});
+
+export const updateUsageDate = (ticketNumber: string, usageDate: string) => ({
+  type: "ticket/updateUsageDate",
+  payload: { ticketNumber, usageDate },
 });
 
 export const setFilterValues = (

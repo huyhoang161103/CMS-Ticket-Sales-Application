@@ -12,8 +12,10 @@ import {
 import { firestore } from "../firebase/config";
 import React from "react";
 import {
+  Button,
   Checkbox,
   DatePicker,
+  Input,
   Pagination,
   Select,
   Space,
@@ -119,16 +121,23 @@ const Ticketpack: React.FC = () => {
       title: "",
       dataIndex: "editButton",
       key: "editButton",
-      render: () => (
-        <span className="no-wrap1" onClick={handleEditTicketPack}>
-          <Icon icon="lucide:edit" />
-          Cập nhật
-        </span>
+      render: (
+        text: any,
+        record: TicketPack // Thêm tham số record
+      ) => (
+        <Button
+          className="capnhat"
+          onClick={() => handleEditTicketPack(record)} // Truyền record vào hàm handleEditTicketPack
+        >
+          <Icon icon="lucide:edit" /> Cập nhật
+        </Button>
       ),
     },
   ];
 
   const dispatch = useDispatch();
+
+  const [selectedTicket, setSelectedTicket] = useState<TicketPack | null>(null);
 
   const ticketPacks = useSelector(
     (state: RootState) => state.ticketPack.ticketPacks
@@ -247,7 +256,10 @@ const Ticketpack: React.FC = () => {
     dispatch(setCurrentPage(page));
   };
 
-  const handleEditTicketPack = () => {
+  // Hàm xử lý sự kiện khi click vào nút "Cập nhật"
+  const handleEditTicketPack = (ticket: TicketPack) => {
+    setSelectedTicket(ticket);
+    setPackageName(ticket.packageName);
     setSelectedTicketPack(true);
   };
 
@@ -322,6 +334,9 @@ const Ticketpack: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* cập nhật gói vé */}
+
       {selectedTicketPack && (
         <div className="overlay">
           <div className="overlay-content">
@@ -337,13 +352,10 @@ const Ticketpack: React.FC = () => {
               </div>
               <div className="row pt-1">
                 <div className="col">
-                  <input type="text" value={"PKG20210502"} />
+                  <Input />
                 </div>
                 <div className="col">
-                  <input
-                    type="text"
-                    value={"Hội chợ triển lãm hàng tiêu dùng 2021"}
-                  />
+                  <Input />
                 </div>
               </div>
               <div className="row pt-3">
@@ -395,11 +407,7 @@ const Ticketpack: React.FC = () => {
                   <Checkbox onChange={handleCheckboxChange}>
                     Vé lẻ (vnđ/vé) với giá
                   </Checkbox>
-                  <input
-                    type="text"
-                    className="input-price"
-                    placeholder="Giá vé"
-                  />
+                  <Input style={{ width: "20%" }} />
                   /vé
                 </div>
               </div>
@@ -408,17 +416,9 @@ const Ticketpack: React.FC = () => {
                   <Checkbox onChange={handleCheckboxChange}>
                     Combo vé với giá
                   </Checkbox>
-                  <input
-                    type="text"
-                    className="input-price"
-                    placeholder="Giá vé"
-                  />
+                  <Input style={{ width: "20%" }} />
                   /
-                  <input
-                    type="text"
-                    className="input-price"
-                    placeholder="Giá vé"
-                  />
+                  <Input style={{ width: "20%" }} />
                   /vé
                 </div>
               </div>
@@ -467,18 +467,14 @@ const Ticketpack: React.FC = () => {
                   Hủy
                 </button>
 
-                <button
-                  className="filter-filter-4"
-                  onClick={handleCancelEditOverlay}
-                >
-                  Lưu
-                </button>
+                <button className="filter-filter-4">Lưu</button>
               </div>
             </div>
           </div>
         </div>
       )}
 
+      {/* thêm gói vé */}
       {showOverlay && (
         <div className="overlay">
           <div className="overlay-content">
@@ -493,7 +489,8 @@ const Ticketpack: React.FC = () => {
               </div>
               <div className="row pt-1">
                 <div className="col">
-                  <input
+                  <Input
+                    style={{ width: "40%" }}
                     required
                     type="text"
                     value={packageName}
@@ -566,7 +563,8 @@ const Ticketpack: React.FC = () => {
                   <Checkbox onChange={handleCheckboxChange}>
                     Vé lẻ (vnđ/vé) với giá
                   </Checkbox>
-                  <input
+                  <Input
+                    style={{ width: "20%" }}
                     value={ticketPrice}
                     onChange={(e) => setTicketPrice(e.target.value)}
                     type="text"
@@ -581,7 +579,8 @@ const Ticketpack: React.FC = () => {
                   <Checkbox onChange={handleCheckboxChange}>
                     Combo vé với giá
                   </Checkbox>
-                  <input
+                  <Input
+                    style={{ width: "20%" }}
                     value={comboPrice}
                     onChange={(e) => setComboPrice(e.target.value)}
                     type="text"
@@ -589,11 +588,7 @@ const Ticketpack: React.FC = () => {
                     placeholder="Giá vé"
                   />
                   /
-                  <input
-                    type="text"
-                    className="input-price"
-                    placeholder="Giá vé"
-                  />
+                  <Input style={{ width: "20%" }} />
                   /vé
                 </div>
               </div>

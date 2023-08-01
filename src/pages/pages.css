@@ -547,3 +547,14 @@ th:nth-child(9) {
 .table-cell-content {
   white-space: normal; /* Cho phép nội dung trong cell của Table nhảy dòng */
 }
+
+.capnhat {
+  color: #ff993c;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  box-shadow: none;
+  border: none;
+  background-color: transparent;
+}

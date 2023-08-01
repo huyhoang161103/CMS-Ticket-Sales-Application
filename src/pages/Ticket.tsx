@@ -647,12 +647,7 @@ const TableWithPagination: React.FC = () => {
             <div className="pt-4">
               <div className="filter-ticket">
                 <button onClick={closeDateChangeOverlay}>Hủy</button>
-                <button
-                  onClick={closeDateChangeOverlay}
-                  className="filter-filter-2"
-                >
-                  Lưu
-                </button>
+                <button className="filter-filter-2">Lưu</button>
               </div>
             </div>
           </div>

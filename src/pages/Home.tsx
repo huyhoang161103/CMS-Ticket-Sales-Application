@@ -88,7 +88,7 @@ const Home: React.FC = () => {
                   </div>
                 </div>
 
-                <AreaChart width={1166} height={230} data={data}>
+                <AreaChart width={1100} height={230} data={data}>
                   <XAxis dataKey="name" />
                   <YAxis />
                   <CartesianGrid strokeDasharray="3 3" />

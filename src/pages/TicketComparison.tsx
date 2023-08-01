@@ -78,12 +78,14 @@ const TicketComparison = () => {
   const rowsPerPage = 7; // Số hàng hiển thị trên mỗi trang
 
   useEffect(() => {
+    // Fetch tickets and set ticketData and filteredTicketData
     const fetchTickets = async () => {
       try {
         const snapshot = await firestore.collection("tickets").get();
         const ticketData = snapshot.docs.map((doc) => doc.data() as TicketData);
         dispatch(setTickets(ticketData));
-        setTicketData(ticketData); // Cập nhật trạng thái ticketData với dữ liệu đã lấy
+        setTicketData(ticketData);
+        setFilteredTicketData(ticketData);
       } catch (error) {
         console.error("Error fetching tickets:", error);
       }
@@ -92,9 +94,15 @@ const TicketComparison = () => {
     fetchTickets();
   }, [dispatch]);
 
+  const [selectedReconciliationStatus, setSelectedReconciliationStatus] =
+    useState<string>("tatca");
+  const [filteredTicketData, setFilteredTicketData] = useState<TicketData[]>(
+    []
+  );
+
   const handleReconciliation = async () => {
     try {
-      // Gọi API để cập nhật trạng thái trong Firestore
+      // Update reconciliation status in Firestore
       const querySnapshot = await firestore
         .collection("tickets")
         .where("reconciliationStatus", "==", "Chưa đối soát")
@@ -105,7 +113,7 @@ const TicketComparison = () => {
       });
       await batch.commit();
 
-      // Nếu không có lỗi, cập nhật lại trạng thái của React component
+      // Update ticketData and filteredTicketData
       const updatedTicketData = ticketData.map((ticket) => {
         if (ticket.reconciliationStatus === "Chưa đối soát") {
           return {
@@ -117,9 +125,24 @@ const TicketComparison = () => {
       });
 
       setTicketData(updatedTicketData);
+      setFilteredTicketData(updatedTicketData);
     } catch (error) {
       console.error("Error updating reconciliation status:", error);
     }
+  };
+
+  const handleFilterClick = () => {
+    const filteredResults = ticketData.filter((ticket) => {
+      return (
+        selectedReconciliationStatus === "tatca" ||
+        (selectedReconciliationStatus === "dadoisoat" &&
+          ticket.reconciliationStatus === "Đã đối soát") ||
+        (selectedReconciliationStatus === "chuadoisoat" &&
+          ticket.reconciliationStatus === "Chưa đối soát")
+      );
+    });
+
+    setFilteredTicketData(filteredResults);
   };
 
   const handlePageChange = (page: number, pageSize?: number) => {
@@ -135,13 +158,11 @@ const TicketComparison = () => {
 
   const handleChange = (e: any) => {
     setValue(e.target.value);
+    setSelectedReconciliationStatus(e.target.value);
   };
 
   // Bên trong thành phần TicketComparison
   const [searchTerm, setSearchTerm] = useState<string>("");
-  const [filteredTicketData, setFilteredTicketData] = useState<TicketData[]>(
-    []
-  );
 
   // Bên trong thành phần TicketComparison
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -202,12 +223,12 @@ const TicketComparison = () => {
                   <Table
                     columns={columns}
                     dataSource={
-                      searchTerm
-                        ? filteredTicketData
-                        : ticketData.map((ticket, index) => ({
+                      filteredTicketData.length > 0
+                        ? filteredTicketData.map((ticket, index) => ({
                             ...ticket,
                             stt: index + 1,
                           }))
+                        : []
                     }
                     pagination={false}
                   />
@@ -271,7 +292,7 @@ const TicketComparison = () => {
                   </div>
                 </div>
                 <div className="filter-ticket">
-                  <button>Lọc</button>
+                  <button onClick={handleFilterClick}>Lọc</button>
                 </div>
               </div>
             </div>
