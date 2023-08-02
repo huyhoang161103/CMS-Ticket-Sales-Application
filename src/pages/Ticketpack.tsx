@@ -297,10 +297,6 @@ const Ticketpack: React.FC = () => {
     console.log(selectedLabel);
   };
 
-  const onSearch = (value: string) => {
-    console.log("search:", value);
-  };
-
   const handlePageChange = (page: number) => {
     dispatch(setCurrentPage(page));
   };
@@ -428,8 +424,6 @@ const Ticketpack: React.FC = () => {
     document.body.removeChild(link);
   };
 
-  // ... (existing code)
-
   const handleExportCSV = () => {
     const formattedData: CSVContent = formatDataForCSV(ticketPacks);
     const fileName = "ticketPacks.csv";
@@ -458,14 +452,15 @@ const Ticketpack: React.FC = () => {
     setSelectedExpirationTime(time);
   };
 
-  // const handleApplicationTimeChange = (time: any) => {
-  //   setSelectedApplicationTime(time?.toDate() || null);
-  // };
+  const [searchText, setSearchText] = useState("");
 
-  // const handleExpirationTimeChange = (time: any) => {
-  //   setSelectedExpirationTime(time?.toDate() || null);
-  // };
+  const filteredTicketPacks = ticketPacks.filter((ticketPack) =>
+    ticketPack.packageCode.toLowerCase().includes(searchText.toLowerCase())
+  );
 
+  const onSearch = (value: string) => {
+    setSearchText(value);
+  };
   return (
     <StyledTicketpack>
       <div className="app">
@@ -483,6 +478,8 @@ const Ticketpack: React.FC = () => {
                     type="text"
                     className="form-control"
                     placeholder="Tìm bằng mã gói"
+                    value={searchText}
+                    onChange={(e) => onSearch(e.target.value)}
                   />
                   <Icon
                     icon="material-symbols:search"
@@ -505,7 +502,7 @@ const Ticketpack: React.FC = () => {
               <div className="ticket-table">
                 <Table
                   columns={columns}
-                  dataSource={ticketPacks.map((ticketPack, index) => ({
+                  dataSource={filteredTicketPacks.map((ticketPack, index) => ({
                     ...ticketPack,
                     index: calculateIndex(index),
                     key: ticketPack.packageCode,
@@ -515,7 +512,7 @@ const Ticketpack: React.FC = () => {
                     position: [bottom],
                     current: currentPage,
                     pageSize: rowsPerPage,
-                    total: ticketPacks.length,
+                    total: filteredTicketPacks.length,
                     onChange: handlePageChange,
                     className: "custom-pagination",
                   }}
