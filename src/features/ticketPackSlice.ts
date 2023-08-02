@@ -3,6 +3,7 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 export interface TicketPack {
   applicationDate: string;
   comboPrice: string;
+  numberOfTickets: string;
   expirationDate: string;
   packageCode: string;
   packageName: string;

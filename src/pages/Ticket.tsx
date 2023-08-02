@@ -144,14 +144,21 @@ const TableWithPagination: React.FC = () => {
       key: "actions",
       render: (text: any, ticket: TicketData) => (
         <td className="icon-cell">
-          {ticket.usageStatus === "Chưa sử dụng" && !ticket.checkInGate ? (
+          {ticket.usageStatus === "Chưa sử dụng" ? (
             <Space wrap>
               {customColors.map((color) => (
                 <Tooltip
                   placement="left"
                   title={
                     <div className="tooltip-content">
-                      <Button className="tooltip-button">Sử dụng vé</Button>
+                      <Button
+                        className="tooltip-button"
+                        onClick={() =>
+                          handleUseTicketClick(ticket.ticketNumber)
+                        }
+                      >
+                        Sử dụng vé
+                      </Button>
                       <Button
                         className="tooltip-button"
                         onClick={openDateChangeOverlay}
@@ -177,6 +184,39 @@ const TableWithPagination: React.FC = () => {
       ),
     },
   ];
+
+  const updateTicketStatus = async (ticketNumber: any) => {
+    try {
+      // Tìm vé trong cơ sở dữ liệu bằng số vé (hoặc mã vé)
+      const ticketRef = firestore
+        .collection("tickets")
+        .where("ticketNumber", "==", ticketNumber);
+      const snapshot = await ticketRef.get();
+
+      if (snapshot.empty) {
+        console.log("Không tìm thấy vé với số vé (hoặc mã vé) cần cập nhật.");
+        return;
+      }
+
+      // Cập nhật trạng thái sử dụng của vé tìm được
+      const ticketId = snapshot.docs[0].id;
+      await firestore
+        .collection("tickets")
+        .doc(ticketId)
+        .update({ usageStatus: "Đã sử dụng" });
+
+      console.log("Cập nhật trạng thái sử dụng của vé thành công.");
+    } catch (error) {
+      console.error("Error updating ticket status:", error);
+    }
+  };
+
+  const handleUseTicketClick = async (ticketNumber: string) => {
+    // Thực hiện hàm cập nhật trạng thái sử dụng của vé bằng số vé (hoặc mã vé)
+    await updateTicketStatus(ticketNumber);
+    // Load lại trang để hiển thị trạng thái mới
+    window.location.reload();
+  };
 
   const currentPage = useSelector(
     (state: RootState) => state.ticketPack.currentPage
@@ -391,12 +431,11 @@ const TableWithPagination: React.FC = () => {
     dispatch(setShowDateChangeOverlay(false));
   };
 
-  const options = ["Show", "Hide", "Center"];
-  const [arrow, setArrow] = useState("Show");
+  // const [arrow, setArrow] = useState("Show");
 
-  const mergedArrow = useMemo(() => {
-    // Your mergedArrow function code here
-  }, [arrow]);
+  // const mergedArrow = useMemo(() => {
+  //   // Your mergedArrow function code here
+  // }, [arrow]);
 
   const dataSource = useMemo(() => {
     // Lọc và tạo mảng mới chứa các vé tương ứng với `ticketType`

@@ -106,10 +106,15 @@ const Ticketpack: React.FC = () => {
       render: (text: string) => `${text}₫`,
     },
     {
-      title: "Giá combo (VNĐ/Combo)",
-      dataIndex: "comboPrice",
-      key: "comboPrice",
-      render: (text: string) => `${text}₫`,
+      title: "Giá Combo (VNĐ/Combo)",
+      key: "comboAndNumberOfTickets",
+      render: (
+        text: any,
+        record: { comboPrice: string; numberOfTickets: string }
+      ) => {
+        const { comboPrice, numberOfTickets } = record;
+        return `${comboPrice}₫/${numberOfTickets} vé`;
+      },
     },
     {
       title: "Tình trạng",
@@ -177,6 +182,8 @@ const Ticketpack: React.FC = () => {
   const [ticketPrice, setTicketPrice] = useState("");
 
   const [comboPrice, setComboPrice] = useState("");
+
+  const [numberOfTickets, setNumberOfTickets] = useState("");
 
   const [status, setStatus] = useState("");
 
@@ -269,6 +276,7 @@ const Ticketpack: React.FC = () => {
       ticketPrice,
       comboPrice,
       status,
+      numberOfTickets,
       expirationTime: selectedExpirationTime?.toLocaleTimeString() ?? "",
       applicationTime: selectedApplicationTime?.toLocaleTimeString() ?? "",
     };
@@ -313,6 +321,7 @@ const Ticketpack: React.FC = () => {
       expirationDate: expirationDate?.toLocaleDateString() ?? "",
       ticketPrice,
       comboPrice,
+      numberOfTickets,
       status,
       expirationTime: selectedExpirationTime?.toLocaleTimeString() ?? "",
       applicationTime: selectedApplicationTime?.toLocaleTimeString() ?? "",
@@ -367,6 +376,7 @@ const Ticketpack: React.FC = () => {
     );
     setTicketPrice(ticket.ticketPrice);
     setComboPrice(ticket.comboPrice);
+    setNumberOfTickets(ticket.numberOfTickets);
     setStatus(ticket.status);
     setSelectedTicketPack(true);
   };
@@ -434,22 +444,16 @@ const Ticketpack: React.FC = () => {
     setApplicationDate(date);
   };
 
-  // ...
-
-  const handleApplicationTimeChange = (time: any) => {
-    setSelectedApplicationTime(time);
-  };
-
-  // ...
-
   const handleExpirationDateChange = (date: any, dateString: string) => {
     setExpirationDate(date);
   };
 
-  // ...
+  const handleApplicationTimeChange = (time: any) => {
+    setSelectedApplicationTime(time?.toDate() || null);
+  };
 
   const handleExpirationTimeChange = (time: any) => {
-    setSelectedExpirationTime(time);
+    setSelectedExpirationTime(time?.toDate() || null);
   };
 
   const [searchText, setSearchText] = useState("");
@@ -642,7 +646,11 @@ const Ticketpack: React.FC = () => {
                     onChange={(e) => setComboPrice(e.target.value)}
                   />
                   /
-                  <Input style={{ width: "20%" }} />
+                  <Input
+                    style={{ width: "20%" }}
+                    value={numberOfTickets}
+                    onChange={(e) => setNumberOfTickets(e.target.value)}
+                  />
                   /vé
                 </div>
               </div>
@@ -720,10 +728,10 @@ const Ticketpack: React.FC = () => {
               <div className="row pt-1">
                 <div className="col">
                   <Input
+                    placeholder="Nhập tên gói vé"
                     style={{ width: "40%" }}
                     required
                     type="text"
-                    value={packageName}
                     onChange={(e) => setPackageName(e.target.value)}
                   />
                 </div>
@@ -743,6 +751,7 @@ const Ticketpack: React.FC = () => {
                       {" "}
                       <Space direction="vertical">
                         <DatePicker
+                          placeholder="Chọn ngày"
                           onChange={(date) =>
                             setApplicationDate(date?.toDate() || null)
                           }
@@ -753,6 +762,7 @@ const Ticketpack: React.FC = () => {
                     <div className="col">
                       <Space wrap>
                         <TimePicker
+                          placeholder="Chọn thời gian"
                           use12Hours
                           onChange={handleApplicationTimeChange}
                         />
@@ -766,6 +776,7 @@ const Ticketpack: React.FC = () => {
                       {" "}
                       <Space direction="vertical">
                         <DatePicker
+                          placeholder="Chọn ngày"
                           onChange={(date) =>
                             setExpirationDate(date?.toDate() || null)
                           }
@@ -776,6 +787,7 @@ const Ticketpack: React.FC = () => {
                     <div className="col">
                       <Space wrap>
                         <TimePicker
+                          placeholder="Chọn thời gian"
                           use12Hours
                           onChange={handleExpirationTimeChange}
                         />
@@ -795,7 +807,6 @@ const Ticketpack: React.FC = () => {
                   </Checkbox>
                   <Input
                     style={{ width: "20%" }}
-                    value={ticketPrice}
                     onChange={(e) => setTicketPrice(e.target.value)}
                     type="text"
                     className="input-price"
@@ -811,14 +822,18 @@ const Ticketpack: React.FC = () => {
                   </Checkbox>
                   <Input
                     style={{ width: "20%" }}
-                    value={comboPrice}
                     onChange={(e) => setComboPrice(e.target.value)}
                     type="text"
                     className="input-price"
                     placeholder="Giá vé"
                   />
                   /
-                  <Input style={{ width: "20%" }} />
+                  <Input
+                    style={{ width: "20%" }}
+                    onChange={(e) => setNumberOfTickets(e.target.value)}
+                    type="text"
+                    placeholder="Số vé"
+                  />
                   /vé
                 </div>
               </div>
@@ -830,7 +845,7 @@ const Ticketpack: React.FC = () => {
                   <Select
                     className="select-ticket"
                     showSearch
-                    placeholder="Select a person"
+                    placeholder="Chọn tình trạng vé"
                     optionFilterProp="children"
                     onChange={(label) => setStatus(label)}
                     onSearch={onSearch}

@@ -62,6 +62,15 @@ const ticketSlice = createSlice({
       );
       state.tickets = updatedTickets;
     },
+    "ticket/updateUsageStatus": (state, action) => {
+      const { ticketId, newStatus } = action.payload;
+      const ticketToUpdate = state.tickets.find(
+        (ticket) => ticket.id === ticketId
+      );
+      if (ticketToUpdate) {
+        ticketToUpdate.usageStatus = newStatus;
+      }
+    },
   },
 });
 
@@ -76,6 +85,11 @@ export const setFilterValues = (
 ) => ({
   type: "ticket/setFilterValues",
   payload: { filterValue, defaultValue },
+});
+
+export const updateUsageStatus = (ticketId: string, newStatus: string) => ({
+  type: "ticket/updateUsageStatus",
+  payload: { ticketId, newStatus },
 });
 
 export const {
