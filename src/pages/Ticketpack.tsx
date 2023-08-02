@@ -317,8 +317,12 @@ const Ticketpack: React.FC = () => {
     const updatedTicket: TicketPack = {
       ...selectedTicket,
       packageName,
-      applicationDate: applicationDate?.toLocaleDateString() ?? "",
-      expirationDate: expirationDate?.toLocaleDateString() ?? "",
+      applicationDate: applicationDate
+        ? dayjs(applicationDate).format("DD/MM/YYYY")
+        : "",
+      expirationDate: expirationDate
+        ? dayjs(expirationDate).format("DD/MM/YYYY")
+        : "",
       ticketPrice,
       comboPrice,
       numberOfTickets,
