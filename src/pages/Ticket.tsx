@@ -32,6 +32,7 @@ import SearchNotificationBar from "../components/search";
 const StyledTicket = styled.div`
   background-color: #f9f6f4;
 `;
+
 type TablePaginationPosition =
   | "topLeft"
   | "topCenter"
@@ -39,6 +40,7 @@ type TablePaginationPosition =
   | "bottomLeft"
   | "bottomCenter"
   | "bottomRight";
+
 const TransparentButton = styled.button`
   font-family: monospace;
   font-size: 18px;
@@ -211,23 +213,20 @@ const TableWithPagination: React.FC = () => {
     }
   };
 
-  const handleUseTicketClick = async (ticketNumber: string) => {
-    // Thực hiện hàm cập nhật trạng thái sử dụng của vé bằng số vé (hoặc mã vé)
-    await updateTicketStatus(ticketNumber);
-    // Load lại trang để hiển thị trạng thái mới
-    window.location.reload();
-  };
-
   const currentPage = useSelector(
     (state: RootState) => state.ticketPack.currentPage
   );
+
   const filterValue = useSelector(
     (state: RootState) => state.ticket.filterValue
   );
+
   const defaultValue = useSelector(
     (state: RootState) => state.ticket.defaultValue
   );
+
   const tickets = useSelector((state: RootState) => state.ticket.tickets);
+
   const showOverlay = useSelector(
     (state: RootState) => state.ticket.showOverlay
   );
@@ -235,17 +234,27 @@ const TableWithPagination: React.FC = () => {
   const showDateChangeOverlay = useSelector(
     (state: RootState) => state.ticket.showDateChangeOverlay
   );
+
   const dispatch = useDispatch();
 
   const [filteredTickets, setFilteredTickets] = useState([] as TicketData[]);
+
   const [selectedGates, setSelectedGates] = useState<string[]>([]);
+
   const [isFiltered, setIsFiltered] = useState(false);
 
+  const [startDate, setStartDate] = useState<Date | null>(null);
+
+  const [endDate, setEndDate] = useState<Date | null>(null);
+
   const rowsPerPage = 4;
+
   const startIndex: number = (currentPage - 1) * rowsPerPage;
+
   const [counter, setCounter] = useState<number>(0); // Khởi tạo biến đếm và đặt giá trị ban đầu là 0.
 
   // Hàm tính lại STT khi hiển thị kết quả lọc
+
   const calculateFilteredIndex = (index: number): number =>
     startIndex + index + 1;
 
@@ -292,6 +301,28 @@ const TableWithPagination: React.FC = () => {
 
     fetchTickets();
   }, [dispatch]);
+
+  const handleUseTicketClick = async (ticketNumber: string) => {
+    try {
+      // Thực hiện hàm cập nhật trạng thái sử dụng của vé bằng số vé (hoặc mã vé)
+      await updateTicketStatus(ticketNumber);
+
+      // Lấy danh sách vé hiện tại từ Redux
+      const currentTickets = [...tickets];
+
+      // Tìm vé được cập nhật trong danh sách và cập nhật trạng thái sử dụng
+      const updatedTickets = currentTickets.map((ticket) =>
+        ticket.ticketNumber === ticketNumber
+          ? { ...ticket, usageStatus: "Đã sử dụng" }
+          : ticket
+      );
+
+      // Cập nhật danh sách vé trong Redux
+      dispatch(setTickets(updatedTickets));
+    } catch (error) {
+      console.error("Error updating ticket status:", error);
+    }
+  };
 
   const exportToCSV = () => {
     // Chuẩn bị dữ liệu để xuất ra file .csv
@@ -356,16 +387,22 @@ const TableWithPagination: React.FC = () => {
 
   const handleCheckAllChange = (e: any) => {
     const checked = e.target.checked;
-    const allGates = ["tatcacong", "cong1", "cong2", "cong3", "cong4", "cong5"];
+    const allGates = [
+      "tatcacong",
+      "Cổng 1",
+      "Cổng 2",
+      "Cổng 3",
+      "Cổng 4",
+      "Cổng 5",
+    ];
     setSelectedGates(checked ? allGates : []);
     dispatch(setFilterValue(checked ? ["tatcacong"] : []));
   };
 
   const handleCheckboxChange = (checkedValues: CheckboxValueType[]) => {
-    console.log("Đã chọn các giá trị:", checkedValues);
+    setSelectedGates(checkedValues as string[]);
     dispatch(setFilterValue(checkedValues as string[]));
   };
-
   const handleChange = (e: any) => {
     dispatch(setDefaultValue(e.target.value));
   };
@@ -376,6 +413,8 @@ const TableWithPagination: React.FC = () => {
 
   const filterTickets = useCallback(
     (tickets: TicketData[], filterValue: string[], defaultValue: string) => {
+      console.log("defaultValue: ", defaultValue);
+
       return tickets.filter((ticket) => {
         // Lọc theo ticketType
         if (
@@ -386,36 +425,46 @@ const TableWithPagination: React.FC = () => {
         }
 
         // Lọc theo trạng thái sử dụng
+        let passUsageStatusFilter = false;
         if (defaultValue === "tatca") {
-          return true;
+          passUsageStatusFilter = true;
         } else if (defaultValue === "dasd") {
-          return ticket.usageStatus === "Đã sử dụng";
+          passUsageStatusFilter = ticket.usageStatus === "Đã sử dụng";
         } else if (defaultValue === "chuasd") {
-          return ticket.usageStatus === "Chưa sử dụng";
+          passUsageStatusFilter = ticket.usageStatus === "Chưa sử dụng";
         } else if (defaultValue === "hethan") {
-          return ticket.usageStatus === "Hết hạn";
+          passUsageStatusFilter = ticket.usageStatus === "Hết hạn";
         }
 
         // Lọc theo cổng check-in
-        if (filterValue.includes("tatcacong")) {
-          // Nếu đã chọn "Tất cả" thì hiển thị tất cả
-          return true;
-        } else if (filterValue.includes(ticket.checkInGate)) {
-          // Nếu cổng check-in của vé được chọn thì hiển thị vé đó
-          return true;
-        }
+        const passCheckInGateFilter =
+          filterValue.includes("tatcacong") ||
+          selectedGates.includes(ticket.checkInGate);
 
-        return false;
+        // Kết hợp cả hai điều kiện
+        return passUsageStatusFilter && passCheckInGateFilter;
       });
     },
-    [displayMode]
+    [displayMode, selectedGates]
   );
+
+  const handleStartDateChange = (date: any) => {
+    setStartDate(date);
+  };
+
+  const handleEndDateChange = (date: any) => {
+    setEndDate(date);
+  };
 
   // Hàm xử lý sự kiện khi người dùng nhấp vào nút "Lọc"
   const handleFilterClick = () => {
     const filteredTickets = filterTickets(tickets, filterValue, defaultValue);
+
     setFilteredTickets(filteredTickets); // Cập nhật state filteredTickets sau khi lọc dữ liệu
     setIsFiltered(true);
+    console.log(filterValue);
+    console.log(defaultValue);
+
     dispatch(setShowOverlay(false));
   };
 
@@ -460,7 +509,13 @@ const TableWithPagination: React.FC = () => {
     }));
 
     return dataWithFilteredIndex;
-  }, [tickets, displayMode, isFiltered, filteredTickets]);
+  }, [
+    tickets,
+    isFiltered,
+    displayMode,
+    calculateIndex,
+    calculateFilteredIndex,
+  ]);
 
   const [bottom] = useState<TablePaginationPosition>("bottomCenter");
 
@@ -480,6 +535,7 @@ const TableWithPagination: React.FC = () => {
               <div className="title">
                 <h2 className="noo-sh-title">Danh sách vé</h2>
               </div>
+
               <div className="category">
                 <TransparentButton
                   style={{
@@ -560,12 +616,18 @@ const TableWithPagination: React.FC = () => {
               <div className="row pt-2">
                 <div className="col">
                   <Space direction="vertical">
-                    <DatePicker onChange={onChange} format="DD/MM/YYYY" />
+                    <DatePicker
+                      onChange={handleStartDateChange}
+                      format="DD/MM/YYYY"
+                    />
                   </Space>
                 </div>
                 <div className="col">
                   <Space direction="vertical">
-                    <DatePicker onChange={onChange} format="DD/MM/YYYY" />
+                    <DatePicker
+                      onChange={handleEndDateChange}
+                      format="DD/MM/YYYY"
+                    />
                   </Space>
                 </div>
               </div>
@@ -606,7 +668,7 @@ const TableWithPagination: React.FC = () => {
                     </Col>
                     <Col span={8}>
                       <Checkbox
-                        value="cong1"
+                        value="Cổng 1"
                         disabled={filterValue.includes("tatcacong")}
                       >
                         Cổng 1
@@ -614,7 +676,7 @@ const TableWithPagination: React.FC = () => {
                     </Col>
                     <Col span={8}>
                       <Checkbox
-                        value="cong2"
+                        value="Cổng 2"
                         disabled={filterValue.includes("tatcacong")}
                       >
                         Cổng 2
@@ -622,7 +684,7 @@ const TableWithPagination: React.FC = () => {
                     </Col>
                     <Col span={8}>
                       <Checkbox
-                        value="cong3"
+                        value="Cổng 3"
                         disabled={filterValue.includes("tatcacong")}
                       >
                         Cổng 3
@@ -630,7 +692,7 @@ const TableWithPagination: React.FC = () => {
                     </Col>
                     <Col span={8}>
                       <Checkbox
-                        value="cong4"
+                        value="Cổng 4"
                         disabled={filterValue.includes("tatcacong")}
                       >
                         Cổng 4
@@ -638,7 +700,7 @@ const TableWithPagination: React.FC = () => {
                     </Col>
                     <Col span={8}>
                       <Checkbox
-                        value="cong5"
+                        value="Cổng 5"
                         disabled={filterValue.includes("tatcacong")}
                       >
                         Cổng 5
@@ -676,7 +738,6 @@ const TableWithPagination: React.FC = () => {
               <div className="row mt-4">
                 <div className="col-4">Hạn sử dụng</div>
                 <div className="col">
-                  {" "}
                   <Space direction="vertical">
                     <DatePicker onChange={onChange} format="DD/MM/YYYY" />
                   </Space>

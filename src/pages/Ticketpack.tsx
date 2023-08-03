@@ -777,7 +777,6 @@ const Ticketpack: React.FC = () => {
                 <div className="col">
                   <div className="row">
                     <div className="col">
-                      {" "}
                       <Space direction="vertical">
                         <DatePicker
                           placeholder="Chọn ngày"

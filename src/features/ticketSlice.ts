@@ -83,7 +83,7 @@ export const setFilterValues = (
   filterValue: string[],
   defaultValue: string
 ) => ({
-  type: "ticket/setFilterValues",
+  type: "ticket/setFilterValue",
   payload: { filterValue, defaultValue },
 });
 
