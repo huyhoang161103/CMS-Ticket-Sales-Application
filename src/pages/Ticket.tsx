@@ -28,6 +28,7 @@ import { useCallback } from "react";
 import { CheckboxValueType } from "antd/es/checkbox/Group";
 import Navbar from "../components/navbar";
 import SearchNotificationBar from "../components/search";
+import { Dayjs } from "dayjs";
 
 const StyledTicket = styled.div`
   background-color: #f9f6f4;
@@ -163,7 +164,7 @@ const TableWithPagination: React.FC = () => {
                       </Button>
                       <Button
                         className="tooltip-button"
-                        onClick={openDateChangeOverlay}
+                        onClick={() => openDateChangeOverlay(ticket)}
                       >
                         Đổi ngày sử dụng
                       </Button>
@@ -227,6 +228,8 @@ const TableWithPagination: React.FC = () => {
 
   const tickets = useSelector((state: RootState) => state.ticket.tickets);
 
+  const [newUsageDate, setNewUsageDate] = useState<Dayjs | null>(null);
+
   const showOverlay = useSelector(
     (state: RootState) => state.ticket.showOverlay
   );
@@ -246,6 +249,10 @@ const TableWithPagination: React.FC = () => {
   const [startDate, setStartDate] = useState<Date | null>(null);
 
   const [endDate, setEndDate] = useState<Date | null>(null);
+
+  const [selectedTicket, setSelectedTicket] = useState<TicketData | null>(null);
+
+  const [usageDate, setUsageDate] = useState<Date | null>(null);
 
   const rowsPerPage = 4;
 
@@ -472,12 +479,62 @@ const TableWithPagination: React.FC = () => {
     dispatch(setShowOverlay(true));
   };
 
-  const openDateChangeOverlay = () => {
+  const openDateChangeOverlay = (ticket: TicketData) => {
+    setSelectedTicket(ticket);
     dispatch(setShowDateChangeOverlay(true));
   };
 
   const closeDateChangeOverlay = () => {
+    setSelectedTicket(null);
     dispatch(setShowDateChangeOverlay(false));
+  };
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return ""; // Check for an invalid date
+    const day = date.getDate();
+    const month = date.getMonth() + 1;
+    const year = date.getFullYear();
+    return `${day < 10 ? "0" + day : day}/${
+      month < 10 ? "0" + month : month
+    }/${year}`;
+  };
+
+  const saveNewUsageDate = async () => {
+    try {
+      if (!selectedTicket || !newUsageDate) {
+        console.error(
+          "Không tìm thấy vé được chọn hoặc ngày sử dụng không hợp lệ."
+        );
+        return;
+      }
+
+      // Tìm tài liệu dựa trên ticketNumber
+      const ticketRef = firestore
+        .collection("tickets")
+        .where("ticketNumber", "==", selectedTicket.ticketNumber);
+      const ticketSnapshot = await ticketRef.get();
+
+      if (ticketSnapshot.empty) {
+        console.error(
+          "Không tìm thấy vé với số vé đã chọn trong cơ sở dữ liệu."
+        );
+        return;
+      }
+
+      // Vì có thể có nhiều vé có cùng số vé, ta chọn vé đầu tiên trong danh sách kết quả
+      const ticketDoc = ticketSnapshot.docs[0];
+
+      // Định dạng lại newUsageDate trước khi lưu vào Firestore
+      const formattedNewUsageDate = formatDate(newUsageDate.toISOString());
+
+      // Tiếp tục xử lý cập nhật tài liệu
+      await ticketDoc.ref.update({ usageDate: formattedNewUsageDate });
+      dispatch(setShowDateChangeOverlay(false));
+    } catch (error) {
+      console.error("Lỗi khi cập nhật ngày sử dụng:", error);
+    }
   };
 
   // const [arrow, setArrow] = useState("Show");
@@ -718,28 +775,32 @@ const TableWithPagination: React.FC = () => {
           </div>
         </div>
       )}
-      {showDateChangeOverlay && (
+      {showDateChangeOverlay && selectedTicket && (
         <div className="overlay">
           <div className="overlay-content-2">
             <h4 className="title-chart">Đổi ngày sử dụng vé</h4>
             <div className="overlay-filter mt-5">
               <div className="row">
                 <div className="col-4">Số vé</div>
-                <div className="col">12345</div>
+                <div className="col">{selectedTicket.ticketNumber}</div>
               </div>
               <div className="row mt-4">
-                <div className="col-4">Số vé</div>
-                <div className="col">Vé cổng - Gói sự kiện</div>
+                <div className="col-4">Loại vé</div>
+                <div className="col">{selectedTicket.ticketTypeName}</div>
               </div>
               <div className="row mt-4">
                 <div className="col-4">Tên sự kiện</div>
-                <div className="col">Hội chợ triển lãm hàng đầu 2021</div>
+                <div className="col">{selectedTicket.nameEvent}</div>
               </div>
               <div className="row mt-4">
                 <div className="col-4">Hạn sử dụng</div>
                 <div className="col">
                   <Space direction="vertical">
-                    <DatePicker onChange={onChange} format="DD/MM/YYYY" />
+                    <DatePicker
+                      value={newUsageDate}
+                      onChange={(date) => setNewUsageDate(date)}
+                      format="DD/MM/YYYY"
+                    />
                   </Space>
                 </div>
               </div>
@@ -747,7 +808,9 @@ const TableWithPagination: React.FC = () => {
             <div className="pt-4">
               <div className="filter-ticket">
                 <button onClick={closeDateChangeOverlay}>Hủy</button>
-                <button className="filter-filter-2">Lưu</button>
+                <button className="filter-filter-2" onClick={saveNewUsageDate}>
+                  Lưu
+                </button>
               </div>
             </div>
           </div>

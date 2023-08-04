@@ -9,6 +9,7 @@ export interface TicketData {
   ticketDate: string;
   checkInGate: string;
   ticketType: String;
+  ticketTypeName: String;
   nameEvent: String;
   reconciliationStatus: string;
 }

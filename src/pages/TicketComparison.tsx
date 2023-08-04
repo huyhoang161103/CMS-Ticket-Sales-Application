@@ -4,17 +4,26 @@ import Navbar from "../components/navbar";
 import "./pages.css";
 import SearchNotificationBar from "../components/search";
 import { Icon } from "@iconify/react";
-import { Pagination, Table } from "antd";
+import { Pagination, Select, Table } from "antd";
 import { Radio } from "antd";
 import type { DatePickerProps } from "antd";
 import { DatePicker, Space } from "antd";
 import { firestore } from "../firebase/config";
 import { TicketData, setTickets } from "../features/ticketSlice";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "../features/store";
 
 const StyledTicketComparison = styled.div`
   background-color: #f9f6f4;
 `;
+
+type TablePaginationPosition =
+  | "topLeft"
+  | "topCenter"
+  | "topRight"
+  | "bottomLeft"
+  | "bottomCenter"
+  | "bottomRight";
 
 const TicketComparison = () => {
   const columns = [
@@ -22,23 +31,33 @@ const TicketComparison = () => {
       title: "STT",
       dataIndex: "stt",
       key: "stt",
-      width: 20,
+      width: 18,
     },
     {
       title: "Số vé",
       dataIndex: "ticketNumber",
       key: "ticketNumber",
+      width: 22,
+    },
+    {
+      title: "Tên Sự kiện",
+      dataIndex: "nameEvent",
+      key: "nameEvent",
+      className: "no-wrap",
+      width: 48,
     },
     {
       title: "Ngày sử dụng",
       dataIndex: "usageDate",
       key: "usageDate",
+      className: "no-wrap",
     },
     {
-      title: "Tên loại vé",
-      dataIndex: "ticketType",
-      key: "ticketType",
+      title: "Loại vé",
+      dataIndex: "ticketTypeName",
+      key: "ticketTypeName",
       ellipsis: true,
+      width: 25,
     },
     {
       title: "Cổng Check-in",
@@ -75,7 +94,7 @@ const TicketComparison = () => {
   const dispatch = useDispatch();
   const [ticketData, setTicketData] = useState<TicketData[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const rowsPerPage = 7; // Số hàng hiển thị trên mỗi trang
+  const rowsPerPage = 6; // Số hàng hiển thị trên mỗi trang
 
   useEffect(() => {
     // Fetch tickets and set ticketData and filteredTicketData
@@ -131,15 +150,25 @@ const TicketComparison = () => {
     }
   };
 
+  const [eventNameFilter, setEventNameFilter] = useState<string | null>(null);
+
+  const handleEventNameFilterChange = (value: string) => {
+    setEventNameFilter(value);
+  };
+
   const handleFilterClick = () => {
     const filteredResults = ticketData.filter((ticket) => {
-      return (
+      const eventNameMatches =
+        eventNameFilter === null || ticket.nameEvent === eventNameFilter;
+
+      const reconciliationStatusMatches =
         selectedReconciliationStatus === "tatca" ||
         (selectedReconciliationStatus === "dadoisoat" &&
           ticket.reconciliationStatus === "Đã đối soát") ||
         (selectedReconciliationStatus === "chuadoisoat" &&
-          ticket.reconciliationStatus === "Chưa đối soát")
-      );
+          ticket.reconciliationStatus === "Chưa đối soát");
+
+      return eventNameMatches && reconciliationStatusMatches;
     });
 
     setFilteredTicketData(filteredResults);
@@ -187,6 +216,12 @@ const TicketComparison = () => {
     setFilteredTicketData(searchResultsWithStt);
   };
 
+  const [bottom] = useState<TablePaginationPosition>("bottomCenter");
+
+  const tickets = useSelector((state: RootState) => state.ticket.tickets);
+
+  const [status, setStatus] = useState("");
+
   return (
     <StyledTicketComparison>
       <div className="app">
@@ -230,16 +265,14 @@ const TicketComparison = () => {
                           }))
                         : []
                     }
-                    pagination={false}
-                  />
-                </div>
-                <div className="pagination-container">
-                  <Pagination
-                    current={currentPage}
-                    pageSize={rowsPerPage}
-                    total={ticketData.length}
-                    onChange={handlePageChange}
-                    className="custom-pagination"
+                    pagination={{
+                      position: [bottom],
+                      current: currentPage,
+                      pageSize: rowsPerPage,
+                      total: tickets.length,
+                      onChange: handlePageChange,
+                      className: "custom-pagination",
+                    }}
                   />
                 </div>
               </div>
@@ -248,18 +281,48 @@ const TicketComparison = () => {
               <div className="content-main-2">
                 <h5 className="noo-sh-title-filter">Lọc vé</h5>
                 <div className="filter-title-checkbox row">
-                  <div className="col">
+                  <Select
+                    className="select-ticket"
+                    showSearch
+                    placeholder="Chọn tên sự kiện"
+                    optionFilterProp="children"
+                    onChange={handleEventNameFilterChange}
+                    filterOption={(input, option) =>
+                      (option?.label ?? "")
+                        .toLowerCase()
+                        .includes(input.toLowerCase())
+                    }
+                    options={[
+                      {
+                        value: "Sự kiện triển lãm robot",
+                        label: "Sự kiện triển lãm robot",
+                      },
+                      {
+                        value: "Sự kiện ra mắt VF9",
+                        label: "Sự kiện ra mắt VF9",
+                      },
+                      {
+                        value: "Chung kết C1",
+                        label: "Chung kết C1",
+                      },
+                    ]}
+                  />
+                  <div className="col pt-3">
                     <p className="title-filter">Trình trạng đối soát</p>
                   </div>
-                  <div className="col">
+                  <div className="col pt-3">
                     <Radio.Group
                       name="radiogroup"
                       value={value}
                       onChange={handleChange}
                     >
                       <Radio value="tatca">Tất cả</Radio>
-                      <Radio value="dadoisoat">Đã đối soát</Radio>
-                      <Radio value="chuadoisoat">Chưa đối soát</Radio>
+                      <Radio value="dadoisoat" className="no-wrap">
+                        Đã đối soát
+                      </Radio>
+                      <Radio value="chuadoisoat" className="no-wrap">
+                        Chưa đối soát
+                      </Radio>
                     </Radio.Group>
                   </div>
                 </div>
