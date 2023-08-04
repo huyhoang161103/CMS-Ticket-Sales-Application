@@ -16,7 +16,6 @@ import {
   Checkbox,
   DatePicker,
   Input,
-  Pagination,
   Select,
   Space,
   Table,

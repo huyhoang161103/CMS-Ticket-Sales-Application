@@ -9,7 +9,6 @@ import {
   Row,
   Space,
   Table,
-  Tag,
   Tooltip,
 } from "antd";
 import { Icon } from "@iconify/react";
@@ -388,10 +387,6 @@ const TableWithPagination: React.FC = () => {
     setDisplayMode(mode);
   };
 
-  const onChange = (date: any, dateString: string) => {
-    console.log(date, dateString);
-  };
-
   const handleCheckAllChange = (e: any) => {
     const checked = e.target.checked;
     const allGates = [
@@ -531,17 +526,12 @@ const TableWithPagination: React.FC = () => {
 
       // Tiếp tục xử lý cập nhật tài liệu
       await ticketDoc.ref.update({ usageDate: formattedNewUsageDate });
+
       dispatch(setShowDateChangeOverlay(false));
     } catch (error) {
       console.error("Lỗi khi cập nhật ngày sử dụng:", error);
     }
   };
-
-  // const [arrow, setArrow] = useState("Show");
-
-  // const mergedArrow = useMemo(() => {
-  //   // Your mergedArrow function code here
-  // }, [arrow]);
 
   const dataSource = useMemo(() => {
     // Lọc và tạo mảng mới chứa các vé tương ứng với `ticketType`

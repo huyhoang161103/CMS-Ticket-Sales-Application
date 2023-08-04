@@ -4,7 +4,7 @@ import Navbar from "../components/navbar";
 import "./pages.css";
 import SearchNotificationBar from "../components/search";
 import { Icon } from "@iconify/react";
-import { Pagination, Select, Table } from "antd";
+import { Select, Table } from "antd";
 import { Radio } from "antd";
 import type { DatePickerProps } from "antd";
 import { DatePicker, Space } from "antd";
@@ -219,8 +219,6 @@ const TicketComparison = () => {
   const [bottom] = useState<TablePaginationPosition>("bottomCenter");
 
   const tickets = useSelector((state: RootState) => state.ticket.tickets);
-
-  const [status, setStatus] = useState("");
 
   return (
     <StyledTicketComparison>
