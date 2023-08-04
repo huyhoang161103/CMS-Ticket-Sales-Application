@@ -245,8 +245,6 @@ const Ticketpack: React.FC = () => {
     fetchTicketPacks();
 
     if (shouldUpdateTicket) {
-      // Gọi API hoặc thực hiện các xử lý cập nhật thông tin vé tại đây
-      // Sau khi cập nhật xong, đặt shouldUpdateTicket về lại false để ngăn việc cập nhật liên tục
       setShouldUpdateTicket(false);
     }
   }, [dispatch, shouldUpdateTicket]);
@@ -259,10 +257,8 @@ const Ticketpack: React.FC = () => {
       const docRef = firestore.collection("ticketpack").doc(packageCode);
       const doc = await docRef.get();
       if (!doc.exists) {
-        // Nếu document không tồn tại, tạo mới và thoát vòng lặp
         break;
       } else {
-        // Nếu document đã tồn tại, tạo lại packageCode và kiểm tra tiếp
         packageCode = generatePackageCode();
       }
     }

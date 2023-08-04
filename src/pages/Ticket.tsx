@@ -527,6 +527,13 @@ const TableWithPagination: React.FC = () => {
       // Tiếp tục xử lý cập nhật tài liệu
       await ticketDoc.ref.update({ usageDate: formattedNewUsageDate });
 
+      // Cập nhật trạng thái ngày sử dụng của vé trong danh sách
+      const updatedTickets = tickets.map((ticket) =>
+        ticket.ticketNumber === selectedTicket.ticketNumber
+          ? { ...ticket, usageDate: formattedNewUsageDate }
+          : ticket
+      );
+      dispatch(setTickets(updatedTickets));
       dispatch(setShowDateChangeOverlay(false));
     } catch (error) {
       console.error("Lỗi khi cập nhật ngày sử dụng:", error);
