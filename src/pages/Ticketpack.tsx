@@ -423,7 +423,10 @@ const Ticketpack: React.FC = () => {
   };
 
   const downloadCSV = (csvContent: CSVContent, fileName: string) => {
-    const blob = new Blob([csvContent], { type: "text/csv" });
+    // Convert the content to Blob with UTF-8 encoding
+    const blob = new Blob(["\ufeff", csvContent], {
+      type: "text/csv;charset=utf-8",
+    });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;

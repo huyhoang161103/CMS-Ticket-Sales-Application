@@ -332,7 +332,7 @@ const TableWithPagination: React.FC = () => {
 
   const exportToCSV = () => {
     // Chuẩn bị dữ liệu để xuất ra file .csv
-    let csvContent = "data:text/csv;charset=utf-8,";
+    let csvContent = "";
 
     // Định dạng tiêu đề cột
     const headers = [
@@ -365,13 +365,23 @@ const TableWithPagination: React.FC = () => {
         ticket.ticketDate,
         ticket.checkInGate,
       ];
-      csvContent += row.join(",") + "\n";
+
+      // Join the row values and handle special characters
+      csvContent +=
+        '"' +
+        row.map((value) => String(value).replace(/"/g, '""')).join('","') +
+        '"\n';
     });
 
-    // Tạo đối tượng URL để tải file .csv
-    const encodedURI = encodeURI(csvContent);
+    // Tạo đối tượng Blob với dữ liệu CSV và định dạng tiếng Việt
+    const blob = new Blob(["\ufeff", csvContent], {
+      type: "text/csv;charset=utf-8",
+    });
+
+    // Tạo URL cho Blob và tạo link để download
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.setAttribute("href", encodedURI);
+    link.setAttribute("href", url);
     link.setAttribute("download", "tickets.csv");
     document.body.appendChild(link);
     link.click();
